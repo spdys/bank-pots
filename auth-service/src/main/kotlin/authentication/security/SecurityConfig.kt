@@ -27,10 +27,6 @@ class SecurityConfig(
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http.csrf { it.disable() }
-            // For HTTPS
-            .requiresChannel { channel ->
-                channel.anyRequest().requiresSecure()
-            }
 
             .authorizeHttpRequests {
                 it

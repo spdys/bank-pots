@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails
 class UserPrincipal(
     private val id: Long?,
     private val username: String,
+    private val password: String,
     private val role: String,
     private val token: String? = null,
 ) : UserDetails {

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("api/v1/users/auth")
 class AuthenticationController(
-    private val authenticationManager: AuthenticationManager
+    private val authenticationManager: AuthenticationManager,
     private val userDetailsService: CustomUserDetailsService,
     private val jwtService: JwtService
 ) {
@@ -45,8 +45,6 @@ class AuthenticationController(
             throw UsernameNotFoundException("Invalid user request!")
         }
     }
-
-
 }
 
 data class AuthenticationRequest(

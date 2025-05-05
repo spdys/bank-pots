@@ -16,6 +16,7 @@ class CustomUserDetailsService(private val userRepository: UserRepository) : Use
                 id = user.id,
                 username = user.username,
                 role = user.role,
+                password = user.password,
             )
         }
 
@@ -24,7 +25,8 @@ class CustomUserDetailsService(private val userRepository: UserRepository) : Use
             return UserPrincipal(
                 id = admin.id,
                 username = admin.username,
-                role = admin.role)
+                role = admin.role,
+                password = admin.password,)
         }
 
         throw UsernameNotFoundException("User not found with username: $username")

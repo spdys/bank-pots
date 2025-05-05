@@ -44,6 +44,7 @@ class JwtAuthenticationFilter(
                         username = userDetails.username,
                         role = userDetails.authorities.first().authority.removePrefix("ROLE_"),
                         token = token,
+                        password = userDetails.password,
                     )
                 } else {
                     userDetails
