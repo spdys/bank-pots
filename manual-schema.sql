@@ -1,76 +1,105 @@
--- USERS
-CREATE TABLE users
+create table if not exists users
 (
-    id         SERIAL PRIMARY KEY,
-    username   TEXT UNIQUE NOT NULL,
-    password   TEXT        NOT NULL,
-    role       TEXT      DEFAULT 'USER',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id         serial
+    primary key,
+    username   text not null
+    unique,
+    password   text not null,
+    role       text      default 'USER'::text,
+    created_at timestamp default CURRENT_TIMESTAMP
 );
 
--- KYC (Know Your Customer)
-CREATE TABLE kyc
+alter table users
+    owner to postgres;
+
+create table if not exists kyc
 (
-    id            SERIAL PRIMARY KEY,
-    user_id       BIGINT UNIQUE REFERENCES users (id),
-    full_name     TEXT        NOT NULL,
-    phone         TEXT,
-    email         TEXT UNIQUE NOT NULL,
-    civil_id      TEXT UNIQUE,
-    address       TEXT,
-    date_of_birth DATE,
-    verified      BOOLEAN DEFAULT FALSE
+    id            serial
+    primary key,
+    user_id       bigint
+    unique
+    references users,
+    full_name     text not null,
+    phone         text,
+    email         text not null
+    unique,
+    civil_id      text
+    unique,
+    address       text,
+    date_of_birth date,
+    verified      boolean default false
 );
 
--- ACCOUNTS
-CREATE TABLE accounts
+alter table kyc
+    owner to postgres;
+
+create table if not exists accounts
 (
-    id             SERIAL PRIMARY KEY,
-    user_id        BIGINT REFERENCES users (id),
-    account_number TEXT UNIQUE NOT NULL,
-    account_type   TEXT        NOT NULL, -- 'MAIN' or 'SAVINGS'
-    balance        DECIMAL(9, 3) DEFAULT 0,
-    currency       TEXT          DEFAULT 'KWD',
-    created_at     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-    is_active      BOOLEAN       DEFAULT TRUE
+    id             serial
+    primary key,
+    user_id        bigint
+    references users,
+    account_number text not null
+    unique,
+    account_type   text not null,
+    balance        numeric(9, 3) default 0,
+    currency       text          default 'KWD'::text,
+    created_at     timestamp     default CURRENT_TIMESTAMP,
+    is_active      boolean       default true
+    );
+
+alter table accounts
+    owner to postgres;
+
+create table if not exists pots
+(
+    id               serial
+    primary key,
+    account_id       bigint
+    references accounts,
+    name             text          not null,
+    balance          numeric(9, 3) default 0,
+    allocation_type  text          not null,
+    allocation_value numeric(9, 3) not null,
+    created_at       timestamp     default CURRENT_TIMESTAMP
+    );
+
+alter table pots
+    owner to postgres;
+
+create table if not exists cards
+(
+    id          serial
+    primary key,
+    account_id  bigint
+    references accounts,
+    pot_id      bigint
+    references pots,
+    card_number text,
+    token       text,
+    card_type   text not null,
+    is_active   boolean   default true,
+    created_at  timestamp default CURRENT_TIMESTAMP,
+    expires_at  timestamp
 );
 
--- POTS (Sub-accounts of MAIN account)
-CREATE TABLE pots
-(
-    id               SERIAL PRIMARY KEY,
-    account_id       BIGINT REFERENCES accounts (id),
-    name             TEXT          NOT NULL,
-    balance          DECIMAL(9, 3) DEFAULT 0,
-    allocation_type  TEXT          NOT NULL, -- 'PERCENT' or 'FIXED'
-    allocation_value DECIMAL(9, 3) NOT NULL,
-    created_at       TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
-);
+alter table cards
+    owner to postgres;
 
--- CARDS
-CREATE TABLE cards
+create table if not exists transactions
 (
-    id          SERIAL PRIMARY KEY,
-    account_id  BIGINT REFERENCES accounts (id),
-    pot_id      BIGINT REFERENCES pots (id), -- NULL for main account cards
-    card_number TEXT,                        -- NULL for tokenized cards
-    token       TEXT,                        -- NULL for physical cards
-    card_type   TEXT NOT NULL,               -- 'PHYSICAL' or 'TOKEN'
-    is_active   BOOLEAN   DEFAULT true,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at  TIMESTAMP
-);
+    id               serial
+    primary key,
+    source_id        bigint,
+    amount           numeric(9, 3) not null,
+    transaction_type text          not null,
+    description      text,
+    balance_before   numeric(9, 3) not null,
+    balance_after    numeric(9, 3) not null,
+    created_at       timestamp default CURRENT_TIMESTAMP,
+    destination_id   bigint        not null
+    );
 
--- TRANSACTIONS
-CREATE TABLE transactions
-(
-    id               SERIAL PRIMARY KEY,
-    source_id        BIGINT,                 -- References accounts(id) or pots(id)
-    card_id          BIGINT REFERENCES cards (id),
-    amount           DECIMAL(9, 3) NOT NULL,
-    transaction_type TEXT          NOT NULL, -- 'DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'PURCHASE'
-    description      TEXT,
-    balance_before   DECIMAL(9, 3) NOT NULL,
-    balance_after    DECIMAL(9, 3) NOT NULL,
-    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+alter table transactions
+    owner to postgres;
+
