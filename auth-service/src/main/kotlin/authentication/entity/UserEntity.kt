@@ -20,8 +20,7 @@ data class UserEntity(
     var username: String,
     var password: String,
 
-    @Enumerated(EnumType.STRING)
-    val role: Role = Role.ROLE_USER,
+    val role: String = "USER",
 
     val createdAt: LocalDateTime = LocalDateTime.now()
 
@@ -29,7 +28,3 @@ data class UserEntity(
 
 )
 
-enum class Role {
-    ROLE_USER,
-    ROLE_ADMIN
-}
