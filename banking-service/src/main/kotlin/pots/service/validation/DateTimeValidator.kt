@@ -4,7 +4,6 @@ import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import kotlin.text.format
 
 class DateTimeValidator : ConstraintValidator<DateTimeValid, String> {
 
@@ -16,7 +15,7 @@ class DateTimeValidator : ConstraintValidator<DateTimeValid, String> {
 
     override fun isValid(value: String?, context: ConstraintValidatorContext): Boolean {
         if (value == null || value.isBlank()) {
-            return true // null values are validated with @NotNull
+            return true
         }
 
         val formatter = DateTimeFormatter.ofPattern(format)

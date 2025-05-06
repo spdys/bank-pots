@@ -1,6 +1,7 @@
 package pots.entity
 
 import jakarta.persistence.*
+import jakarta.validation.constraints.Email
 import pots.service.validation.DateTimeValid
 
 @Entity
@@ -15,7 +16,10 @@ data class KYCEntity(
 
     var fullName: String,
     var phone: String,
+
+    @field:Email(message = "Invalid email format")
     var email: String,
+
     var civilId: String,
     var address: String,
 

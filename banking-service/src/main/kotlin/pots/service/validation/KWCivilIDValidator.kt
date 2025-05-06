@@ -1,0 +1,55 @@
+package pots.service.validation
+
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+
+class KWCivilIDValidator {
+
+    class InvalidCivilIDException(message: String) : Exception(message)
+
+    companion object {
+        private val regex = Regex("^\\d{12}$")
+        private val weights = listOf(2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2)
+
+        @Throws(InvalidCivilIDException::class)
+        fun validate(civilId: String): String {
+            if (!regex.matches(civilId)) {
+                throw InvalidCivilIDException("Enter a valid Kuwaiti Civil ID number")
+            }
+
+            // Extract and build birthdate
+            val centuryChar = civilId[0]
+            val yy = civilId.substring(1, 3)
+            val mm = civilId.substring(3, 5)
+            val dd = civilId.substring(5, 7)
+
+            val fullYear = when (centuryChar) {
+                '2' -> "19$yy"
+                '3' -> "20$yy"
+                else -> throw InvalidCivilIDException("Invalid century digit")
+            }
+
+            try {
+                LocalDate.parse("$fullYear-$mm-$dd", DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+            } catch (e: DateTimeParseException) {
+                throw InvalidCivilIDException("Invalid birth date in Civil ID")
+            }
+
+            // Checksum validation
+            var checksum = 0
+            for (i in 0 until 11) {
+                checksum += civilId[i].digitToInt() * weights[i]
+            }
+
+            val remainder = checksum % 11
+            val checkDigit = 11 - remainder
+
+            if (checkDigit != civilId[11].digitToInt()) {
+                throw InvalidCivilIDException("Invalid Civil ID checksum")
+            }
+
+            return civilId
+        }
+    }
+}
