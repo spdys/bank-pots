@@ -2,7 +2,7 @@ package pots.dto
 
 
 
-data class KYCRequest(
+data class KYCInfo(
     val userId: Long,
     val fullName: String,
     val phone: String,
@@ -11,3 +11,6 @@ data class KYCRequest(
     val address: String,
     val dateOfBirth: String,
 )
+
+
+

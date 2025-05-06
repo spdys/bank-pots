@@ -37,7 +37,7 @@ class GlobalExceptionHandler {
     @ExceptionHandler(Exception::class)
     fun handleGeneralException(ex: Exception): ResponseEntity<FailureResponse> {
         return ResponseEntity
-            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .status(HttpStatus.BAD_REQUEST)
             .body(FailureResponse(ex.message ?: "An unexpected error occurred."))
     }
 }

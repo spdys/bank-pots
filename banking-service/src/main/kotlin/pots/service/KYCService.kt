@@ -3,7 +3,7 @@ package pots.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-import pots.dto.KYCRequest
+import pots.dto.KYCInfo
 import pots.entity.KYCEntity
 import pots.repository.KYCRepository
 import pots.service.validation.KWCivilIDValidator
@@ -21,26 +21,31 @@ class KYCService(private val kYCRepository: KYCRepository) {
         }
     }
 
-    fun createOrUpdateKYC(kycRequest: KYCRequest): ResponseEntity<Any> {
+    fun createOrUpdateKYC(kycInfo: KYCInfo): ResponseEntity<Any> {
 
-        validateFullName(kycRequest.fullName) // throws IllegalArgumentException | runtime
-        KWCivilIDValidator.validate(kycRequest.civilId) // throws PotsException | runtime
+        validateFullName(kycInfo.fullName) // throws IllegalArgumentException | runtime
+        KWCivilIDValidator.validate(kycInfo.civilId) // throws PotsException | runtime
         val kyc =
-            if (kYCRepository.existsByUserId(kycRequest.userId)) {
-                kYCRepository.findByUserId(kycRequest.userId)?.copy()
+            if (kYCRepository.existsByUserId(kycInfo.userId)) {
+                kYCRepository.findByUserId(kycInfo.userId)?.copy(
+                    fullName = kycInfo.fullName,
+                    phone = kycInfo.phone,
+                    email = kycInfo.email,
+                    address = kycInfo.address
+                )
                     ?: throw EntityNotFoundException("Kyc entity not found")
             } else
                 KYCEntity(
-                    userId = kycRequest.userId,
-                    fullName = kycRequest.fullName,
-                    phone = kycRequest.phone,
-                    email = kycRequest.email,
-                    civilId = kycRequest.civilId,
-                    address = kycRequest.address,
-                    dateOfBirth = kycRequest.dateOfBirth,
+                    userId = kycInfo.userId,
+                    fullName = kycInfo.fullName,
+                    phone = kycInfo.phone,
+                    email = kycInfo.email,
+                    civilId = kycInfo.civilId,
+                    address = kycInfo.address,
+                    dateOfBirth = kycInfo.dateOfBirth,
                 )
         kYCRepository.save(kyc)
-        return ResponseEntity.ok().body("KYC information successfully created/updated")
-
+        return ResponseEntity.ok(
+            kyc)
     }
 }
