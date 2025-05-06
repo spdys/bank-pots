@@ -1,6 +1,5 @@
 package banking
 
-import jakarta.persistence.EntityNotFoundException
 import banking.dto.FailureResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -9,28 +8,20 @@ import org.springframework.web.bind.annotation.*
 @RestControllerAdvice
 class GlobalExceptionHandler {
 
-    // Handle PotsExceptions
-    @ExceptionHandler(PotsException::class)
-    fun handlePotsException(ex: PotsException): ResponseEntity<FailureResponse> {
+    // Handling bad requests
+    @ExceptionHandler(BankingBadRequestException::class)
+    fun handlePotsBadRequestException(ex: BankingBadRequestException): ResponseEntity<FailureResponse> {
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(FailureResponse(ex.message ?: "An error occurred."))
+            .body(FailureResponse(ex.message ?: "Bad request."))
     }
 
-    // Handling IllegalArgumentException
-    @ExceptionHandler(IllegalArgumentException::class)
-    fun handleIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<FailureResponse> {
-        return ResponseEntity
-            .status(HttpStatus.BAD_REQUEST)
-            .body(FailureResponse(ex.message ?: "Invalid argument provided."))
-    }
-
-    // Handling EntityNotFoundException
-    @ExceptionHandler(EntityNotFoundException::class)
-    fun handleEntityNotFoundException(ex: EntityNotFoundException): ResponseEntity<FailureResponse> {
+    // Handling not founds
+    @ExceptionHandler(BankingNotFoundException::class)
+    fun handlePotsNotFoundException(ex: BankingNotFoundException): ResponseEntity<FailureResponse> {
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
-            .body(FailureResponse(ex.message ?: "Entity not found."))
+            .body(FailureResponse(ex.message ?: "Not found."))
     }
 
     // Catch other unhandled exceptions and return a generic message
