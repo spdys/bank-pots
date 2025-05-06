@@ -44,8 +44,14 @@ import org.springframework.stereotype.Component
     // Extract the username (email) from token
     fun extractUsername(token: String): String = extractClaims(token).subject
 
-    fun extractUserId(token: String): Long =
-        (extractClaims(token)["id"] as Number).toLong()
+    fun extractUserId(token: String): Long {
+        val idClaim = extractClaims(token)["id"]
+        return when (idClaim) {
+            is Number -> idClaim.toLong()
+            is String -> idClaim.toLong()
+            else -> throw IllegalArgumentException("Invalid ID type in token")
+        }
+    }
 
     // Extract a user role from token
     fun extractRole(token: String): String = extractClaims(token)["role"] as String
