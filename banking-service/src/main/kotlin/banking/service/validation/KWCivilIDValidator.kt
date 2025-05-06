@@ -1,6 +1,6 @@
-package pots.service.validation
+package banking.service.validation
 
-import pots.PotsException
+import banking.PotsException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException

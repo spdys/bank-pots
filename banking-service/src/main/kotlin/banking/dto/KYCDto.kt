@@ -1,4 +1,4 @@
-package pots.dto
+package banking.dto
 
 
 

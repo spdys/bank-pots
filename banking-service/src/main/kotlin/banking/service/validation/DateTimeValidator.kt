@@ -1,4 +1,4 @@
-package pots.service.validation
+package banking.service.validation
 
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext

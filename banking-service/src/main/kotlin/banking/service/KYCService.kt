@@ -1,13 +1,13 @@
-package pots.service
+package banking.service
 
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-import pots.dto.KYCRequest
-import pots.dto.KYCResponse
-import pots.entity.KYCEntity
-import pots.repository.KYCRepository
-import pots.service.validation.KWCivilIDValidator
+import banking.dto.KYCRequest
+import banking.dto.KYCResponse
+import banking.entity.KYCEntity
+import banking.repository.KYCRepository
+import banking.service.validation.KWCivilIDValidator
 
 @Service
 class KYCService(private val kYCRepository: KYCRepository) {

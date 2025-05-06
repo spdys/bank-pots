@@ -1,7 +1,7 @@
 # Read Me First
 The following was discovered as part of building this project:
 
-* The original package name 'com.cornerstone.bank-pots' is invalid and this project uses 'com.cornerstone.bank_pots' instead.
+* The original package name 'com.cornerstone.bank-banking' is invalid and this project uses 'com.cornerstone.bank_pots' instead.
 
 # Getting Started
 

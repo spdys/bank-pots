@@ -1,7 +1,7 @@
-package pots
+package banking
 
 import jakarta.persistence.EntityNotFoundException
-import pots.dto.FailureResponse
+import banking.dto.FailureResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*

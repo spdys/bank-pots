@@ -1,4 +1,4 @@
-package pots
+package banking
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication

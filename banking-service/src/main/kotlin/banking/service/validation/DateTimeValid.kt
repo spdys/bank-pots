@@ -1,4 +1,4 @@
-package pots.service.validation
+package banking.service.validation
 
 import jakarta.validation.Constraint
 import jakarta.validation.Payload
