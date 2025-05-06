@@ -10,5 +10,6 @@
 .idea/
 
 auth-service/target
+banking-service/target
 /noor.md
 main
