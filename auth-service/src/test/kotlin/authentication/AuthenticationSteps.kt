@@ -1,7 +1,5 @@
 package authentication
 
-import authentication.dto.UserCreationRequest
-import authentication.entity.UserEntity
 import authentication.security.jwt.JwtService
 import io.cucumber.java.Before
 import io.cucumber.java.en.Given
@@ -9,8 +7,6 @@ import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import org.springframework.http.HttpHeaders
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.skyscreamer.jsonassert.JSONAssert
-import org.skyscreamer.jsonassert.JSONCompareMode
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
