@@ -1,14 +1,14 @@
 package pots.controller
 
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pots.dto.KYCFlagRequest
-import pots.dto.KYCInfo
+import pots.dto.KYCRequest
 import pots.service.KYCService
 
 @RestController
@@ -17,13 +17,22 @@ class KYCController(kycService: KYCService, private val kYCService: KYCService) 
 
 
     @PostMapping
-    fun submitKYC(@RequestBody kycInfo: KYCInfo): ResponseEntity<Any> {
-        return kYCService.createOrUpdateKYC(kycInfo)
+    fun submitKYC(@RequestBody kycRequest: KYCRequest): ResponseEntity<Any> {
+        return kYCService.createOrUpdateKYC(kycRequest)
     }
 
+    @GetMapping("/{userId}")
+    fun getKYC(@PathVariable userId: Long): ResponseEntity<Any> {
+        return kYCService.getKYC(userId)
+    }
+
+    // Re-send request to unflag
+    // TODO(Make it for admins only!)
     @PostMapping("/flag")
     fun flagKYC(@RequestBody userIdRequest: KYCFlagRequest): ResponseEntity<Any> {
-        return kYCService.flagKYC(userIdRequest.userId)
+        return kYCService.flagOrUnflagKYC(userIdRequest.userId)
     }
+
+
 
 }

@@ -3,7 +3,8 @@ package pots.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-import pots.dto.KYCInfo
+import pots.dto.KYCRequest
+import pots.dto.KYCResponse
 import pots.entity.KYCEntity
 import pots.repository.KYCRepository
 import pots.service.validation.KWCivilIDValidator
@@ -21,42 +22,70 @@ class KYCService(private val kYCRepository: KYCRepository) {
         }
     }
 
-    fun createOrUpdateKYC(kycInfo: KYCInfo): ResponseEntity<Any> {
+    fun createOrUpdateKYC(kycRequest: KYCRequest): ResponseEntity<Any> {
 
-        validateFullName(kycInfo.fullName) // throws IllegalArgumentException | runtime
-        KWCivilIDValidator.validate(kycInfo.civilId) // throws PotsException | runtime
+        validateFullName(kycRequest.fullName) // throws IllegalArgumentException | runtime
+        KWCivilIDValidator.validate(kycRequest.civilId) // throws PotsException | runtime
         val kyc =
-            if (kYCRepository.existsByUserId(kycInfo.userId)) {
-                kYCRepository.findByUserId(kycInfo.userId)?.copy(
-                    fullName = kycInfo.fullName,
-                    phone = kycInfo.phone,
-                    email = kycInfo.email,
-                    address = kycInfo.address
+            if (kYCRepository.existsByUserId(kycRequest.userId)) {
+                kYCRepository.findByUserId(kycRequest.userId)?.copy(
+                    fullName = kycRequest.fullName,
+                    phone = kycRequest.phone,
+                    email = kycRequest.email,
+                    address = kycRequest.address
                 )
                     ?: throw EntityNotFoundException("Kyc entity not found")
             } else
                 KYCEntity(
-                    userId = kycInfo.userId,
-                    fullName = kycInfo.fullName,
-                    phone = kycInfo.phone,
-                    email = kycInfo.email,
-                    civilId = kycInfo.civilId,
-                    address = kycInfo.address,
-                    dateOfBirth = kycInfo.dateOfBirth,
+                    userId = kycRequest.userId,
+                    fullName = kycRequest.fullName,
+                    phone = kycRequest.phone,
+                    email = kycRequest.email,
+                    civilId = kycRequest.civilId,
+                    address = kycRequest.address,
+                    dateOfBirth = kycRequest.dateOfBirth,
                 )
         kYCRepository.save(kyc)
         return ResponseEntity.ok(
-            kyc)
+            KYCResponse(
+                kyc.userId,
+                kyc.fullName,
+                kyc.phone,
+                kyc.email,
+                kyc.civilId,
+                kyc.dateOfBirth,
+                kyc.dateOfBirth,
+                verified = kyc.verified
+            )
+        )
     }
 
-    fun flagKYC(userId: Long): ResponseEntity<Any> {
+    fun flagOrUnflagKYC(userId: Long): ResponseEntity<Any> {
 
-         if (!kYCRepository.existsByUserId(userId))
-             throw EntityNotFoundException("KYC entity not found")
+        if (!kYCRepository.existsByUserId(userId))
+            throw EntityNotFoundException("KYC entity not found")
         val kyc = kYCRepository.findByUserId(userId)
-        kyc!!.verified = false
+        kyc!!.verified = !kyc.verified
         kYCRepository.save(kyc)
-        return ResponseEntity.ok().body("User ${kyc.fullName} has been successfully flaged")
+        return ResponseEntity.ok()
+            .body("User ${kyc.fullName} has been successfully flagged and verified status is now ${kyc.verified}")
+    }
+
+    fun getKYC(userId: Long): ResponseEntity<Any> {
+        if (!kYCRepository.existsByUserId(userId))
+            throw EntityNotFoundException("KYC entity not found")
+        val kyc = kYCRepository.findByUserId(userId)!!
+        return ResponseEntity.ok(
+            KYCResponse(
+                kyc.userId,
+                kyc.fullName,
+                kyc.phone,
+                kyc.email,
+                kyc.civilId,
+                kyc.dateOfBirth,
+                kyc.dateOfBirth,
+                verified = kyc.verified
+            ))
     }
 
 
