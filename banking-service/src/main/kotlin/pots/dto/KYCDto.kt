@@ -12,5 +12,7 @@ data class KYCInfo(
     val dateOfBirth: String,
 )
 
+data class KYCFlagRequest(val userId: Long)
+
 
 

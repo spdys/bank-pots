@@ -48,4 +48,16 @@ class KYCService(private val kYCRepository: KYCRepository) {
         return ResponseEntity.ok(
             kyc)
     }
+
+    fun flagKYC(userId: Long): ResponseEntity<Any> {
+
+         if (!kYCRepository.existsByUserId(userId))
+             throw EntityNotFoundException("KYC entity not found")
+        val kyc = kYCRepository.findByUserId(userId)
+        kyc!!.verified = false
+        kYCRepository.save(kyc)
+        return ResponseEntity.ok().body("User ${kyc.fullName} has been successfully flaged")
+    }
+
+
 }
