@@ -1,3 +1,4 @@
 package banking
 
-open class PotsException(message: String): RuntimeException(message)
+open class BankingBadRequestException(message: String): RuntimeException(message)
+open class BankingNotFoundException(message: String): RuntimeException(message)

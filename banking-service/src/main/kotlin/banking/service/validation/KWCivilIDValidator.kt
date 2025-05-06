@@ -1,6 +1,6 @@
 package banking.service.validation
 
-import banking.PotsException
+import banking.BankingBadRequestException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -10,10 +10,10 @@ class KWCivilIDValidator {
         private val regex = Regex("^\\d{12}$")
         private val weights = listOf(2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2)
 
-        @Throws(PotsException::class)
+        @Throws(BankingBadRequestException::class)
         fun validate(civilId: String): String {
             if (!regex.matches(civilId)) {
-                throw PotsException("Enter a valid Kuwaiti Civil ID number")
+                throw BankingBadRequestException("Enter a valid Kuwaiti Civil ID number.")
             }
 
             // Extract and build birthdate
@@ -25,13 +25,13 @@ class KWCivilIDValidator {
             val fullYear = when (centuryChar) {
                 '2' -> "19$yy"
                 '3' -> "20$yy"
-                else -> throw PotsException("Invalid century digit in Civil ID")
+                else -> throw BankingBadRequestException("Invalid century digit in Civil ID.")
             }
 
             try {
                 LocalDate.parse("$fullYear-$mm-$dd", DateTimeFormatter.ofPattern("yyyy-MM-dd"))
             } catch (e: DateTimeParseException) {
-                throw PotsException("Invalid birth date in Civil ID")
+                throw BankingBadRequestException("Invalid birth date in Civil ID.")
             }
 
             // Checksum validation
@@ -44,7 +44,7 @@ class KWCivilIDValidator {
             val checkDigit = 11 - remainder
 
             if (checkDigit != civilId[11].digitToInt()) {
-                throw PotsException("Invalid Civil ID checksum") as Throwable
+                throw BankingBadRequestException("Invalid Civil ID checksum.") as Throwable
             }
 
             return civilId
