@@ -3,6 +3,7 @@ package authentication.service
 import authentication.dto.UserCreationRequest
 import authentication.entity.UserEntity
 import authentication.repository.UserRepository
+import org.springframework.http.ResponseEntity
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
@@ -16,10 +17,11 @@ class UserService(val userRepository: UserRepository, private val passwordEncode
         require(password.any { it.isDigit() }) { "Password must contain at least one number" }
     }
 
-    fun createUser(user: UserCreationRequest) {
+    fun createUser(user: UserCreationRequest): ResponseEntity<String?> {
 
         validatePassword(user.password)
 
         userRepository.save(UserEntity(username = user.username, password = passwordEncoder.encode(user.password)))
+        return ResponseEntity.ok().body("User registered successfully")
     }
 }
