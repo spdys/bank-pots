@@ -5,4 +5,7 @@ import org.springframework.stereotype.Repository
 import pots.entity.KYCEntity
 
 @Repository
-interface KYCRepository : JpaRepository<KYCEntity, Long> {}
+interface KYCRepository : JpaRepository<KYCEntity, Long> {
+    fun findByUserId(userId: Long): KYCEntity?
+    fun existsByUserId(userId: Long): Boolean
+}

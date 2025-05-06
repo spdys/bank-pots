@@ -21,7 +21,7 @@ class UserController(val userRepository: UserRepository, private val userService
         return try {
             ResponseEntity.ok().body(userService.createUser(user))
         } catch (e: IllegalArgumentException){
-            ResponseEntity.badRequest().body(mapOf("error" to e.message))
+            ResponseEntity.badRequest().body(mapOf("error" to (e.message ?: "Invalid input")))
         }
     }
 
