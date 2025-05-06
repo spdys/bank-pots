@@ -1,9 +1,9 @@
-package pots.entity
+package banking.entity
 
 import jakarta.persistence.*
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.Pattern
-import pots.service.validation.DateTimeValid
+import banking.service.validation.DateTimeValid
 
 @Entity
 @Table(name = "kyc")

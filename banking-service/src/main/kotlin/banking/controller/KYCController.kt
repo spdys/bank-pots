@@ -1,4 +1,4 @@
-package pots.controller
+package banking.controller
 
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import pots.dto.KYCFlagRequest
-import pots.dto.KYCRequest
-import pots.service.KYCService
+import banking.dto.KYCFlagRequest
+import banking.dto.KYCRequest
+import banking.service.KYCService
 
 @RestController
 @RequestMapping("/api/v1/kyc")
