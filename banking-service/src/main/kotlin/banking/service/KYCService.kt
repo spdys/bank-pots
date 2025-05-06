@@ -1,6 +1,6 @@
 package banking.service
 
-import jakarta.persistence.EntityNotFoundException
+import banking.BankingNotFoundException
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import banking.dto.KYCRequest
@@ -24,8 +24,8 @@ class KYCService(private val kYCRepository: KYCRepository) {
 
     fun createOrUpdateKYC(kycRequest: KYCRequest): ResponseEntity<Any> {
 
-        validateFullName(kycRequest.fullName) // throws IllegalArgumentException | runtime
-        KWCivilIDValidator.validate(kycRequest.civilId) // throws PotsException | runtime
+        validateFullName(kycRequest.fullName) // throws PotsBadRequestException | runtime
+        KWCivilIDValidator.validate(kycRequest.civilId) // throws PotsNotFoundException | runtime
         val kyc =
             if (kYCRepository.existsByUserId(kycRequest.userId)) {
                 kYCRepository.findByUserId(kycRequest.userId)?.copy(
@@ -34,7 +34,7 @@ class KYCService(private val kYCRepository: KYCRepository) {
                     email = kycRequest.email,
                     address = kycRequest.address
                 )
-                    ?: throw EntityNotFoundException("Kyc entity not found")
+                    ?: throw BankingNotFoundException("Kyc entity not found.")
             } else
                 KYCEntity(
                     userId = kycRequest.userId,
@@ -63,17 +63,17 @@ class KYCService(private val kYCRepository: KYCRepository) {
     fun flagOrUnflagKYC(userId: Long): ResponseEntity<Any> {
 
         if (!kYCRepository.existsByUserId(userId))
-            throw EntityNotFoundException("KYC entity not found")
+            throw BankingNotFoundException("KYC entity not found.")
         val kyc = kYCRepository.findByUserId(userId)
         kyc!!.verified = !kyc.verified
         kYCRepository.save(kyc)
         return ResponseEntity.ok()
-            .body("User ${kyc.fullName} has been successfully flagged and verified status is now ${kyc.verified}")
+            .body("User ${kyc.fullName} has been successfully flagged and verified status is now ${kyc.verified}.")
     }
 
     fun getKYC(userId: Long): ResponseEntity<Any> {
         if (!kYCRepository.existsByUserId(userId))
-            throw EntityNotFoundException("KYC entity not found")
+            throw BankingNotFoundException("KYC entity not found,.")
         val kyc = kYCRepository.findByUserId(userId)!!
         return ResponseEntity.ok(
             KYCResponse(
