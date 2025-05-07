@@ -11,7 +11,6 @@ import banking.repository.PotRepository
 import banking.security.UserPrincipal
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import kotlin.compareTo
 
 @Service
 class PotService(
@@ -52,8 +51,6 @@ class PotService(
         if (request.allocationValue <= BigDecimal.ZERO) {
             throw BankingBadRequestException("Allocation value cannot be zero or negative.")
         }
-
-        if (request.allocationValue <= BigDecimal.ZERO) throw BankingBadRequestException("Allocation value cannot be zero or negative.")
 
         val pot = PotEntity(
             accountId = account.id,
