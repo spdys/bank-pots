@@ -66,7 +66,7 @@ class PotService(
             .orElseThrow { BankingNotFoundException("Pot not found with id $potId.") }
 
         // checking if pot id belongs to account
-        if (pot.account.id != account.id) {
+        if (pot.accountId != account.id) {
             throw BankingBadRequestException("Pot does not belong to account $accountId.")
         }
 
