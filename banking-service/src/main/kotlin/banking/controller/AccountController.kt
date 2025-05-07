@@ -48,15 +48,15 @@ class AccountController(
         val response = potService.editPot(accountId, potId, request, principal)
         return ResponseEntity.ok(response)
     }
-//
-//    @GetMapping("/accounts/v1/{accountId}/summary")
-//    fun getAccountSummary(
-//        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
-//        @PathVariable accountId: Long
-//    ): ResponseEntity<AccountSummaryDto> {
-//        val response = accountService.getAccountSummary(accountId, principal)
-//        return ResponseEntity.ok(response)
-//    }
+
+    @GetMapping("/accounts/v1/{accountId}/summary")
+    fun getAccountSummary(
+        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
+        @PathVariable accountId: Long
+    ): ResponseEntity<AccountSummaryDto> {
+        val response = accountService.getAccountSummary(accountId, principal)
+        return ResponseEntity.ok(response)
+    }
 //
 //    @PreAuthorize("hasRole('ADMIN')")
 //    @PostMapping("/admin/v1/accounts/{accountId}/close")

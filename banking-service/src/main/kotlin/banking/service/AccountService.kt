@@ -47,21 +47,6 @@ class AccountService(
         )
     }
 
-    fun closeAccount(accountId: Long): CloseAccountResponse {
-        val account = accountRepository.findById(accountId)
-            .orElseThrow { BankingNotFoundException("Account not found.") }
-
-        val updatedAccount = account.copy(isActive = false)
-        accountRepository.save(updatedAccount)
-
-        return CloseAccountResponse(
-            updatedAccount.id,
-            updatedAccount.accountNumber,
-            updatedAccount.accountType,
-            updatedAccount.isActive
-        )
-    }
-
     fun getAccountSummary(accountId: Long, principal: UserPrincipal): AccountSummaryDto {
         // checking if account exists
         val account = accountRepository.findById(accountId)
@@ -105,4 +90,19 @@ class AccountService(
             )
         }
     }
+    fun closeAccount(accountId: Long): CloseAccountResponse {
+        val account = accountRepository.findById(accountId)
+            .orElseThrow { BankingNotFoundException("Account not found.") }
+
+        val updatedAccount = account.copy(isActive = false)
+        accountRepository.save(updatedAccount)
+
+        return CloseAccountResponse(
+            updatedAccount.id,
+            updatedAccount.accountNumber,
+            updatedAccount.accountType,
+            updatedAccount.isActive
+        )
+    }
+
 }
