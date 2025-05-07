@@ -57,14 +57,14 @@ class AccountController(
         val response = accountService.getAccountSummary(accountId, principal)
         return ResponseEntity.ok(response)
     }
-//
-//    @PreAuthorize("hasRole('ADMIN')")
-//    @PostMapping("/admin/v1/accounts/{accountId}/close")
-//    fun closeAccount(
-//        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
-//        @PathVariable accountId: Long
-//    ): ResponseEntity<CloseAccountResponse> {
-//        val response = accountService.closeAccount(accountId)
-//        return ResponseEntity.ok(response)
-//    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/v1/accounts/{accountId}/close")
+    fun closeAccount(
+        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
+        @PathVariable accountId: Long
+    ): ResponseEntity<CloseAccountResponse> {
+        val response = accountService.closeAccount(accountId)
+        return ResponseEntity.ok(response)
+    }
 }

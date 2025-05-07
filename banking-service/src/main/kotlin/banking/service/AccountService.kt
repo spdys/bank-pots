@@ -91,6 +91,7 @@ class AccountService(
         }
     }
     fun closeAccount(accountId: Long): CloseAccountResponse {
+        // checking if account exists
         val account = accountRepository.findById(accountId)
             .orElseThrow { BankingNotFoundException("Account not found.") }
 
@@ -104,5 +105,4 @@ class AccountService(
             updatedAccount.isActive
         )
     }
-
 }
