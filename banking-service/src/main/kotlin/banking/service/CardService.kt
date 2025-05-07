@@ -1,45 +1,45 @@
 package com.banking.bankingservice.service
 
-import banking.MissingAccountException
-import banking.dto.CardDTO
-import com.banking.bankingservice.entity.Account
+import banking.BankingBadRequestException
 import com.banking.bankingservice.entity.CardEntity
-import com.banking.bankingservice.entity.Pot
 import com.banking.bankingservice.repository.CardRepository
+import banking.BankingNotFoundException
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
 import kotlin.random.Random
 
-
 @Service
 class CardService(
     private val cardRepository: CardRepository
 ) {
-    fun createCard(request: CardDTO): CardEntity {
-        val tempAccount = Account(tempId = request.accountId ?: throw MissingAccountException()) // to be replaced
 
-        val tempPot = request.potId?.let { Pot(tempId = it) } // to be replaced
+    fun getCardById(id: Long): CardEntity {
+        val card = cardRepository.findById(id).orElseThrow {
+            BankingNotFoundException("Card with ID $id not found")
+        }
+        checkAndMarkExpired(card)
+        return card
+    }
 
+    fun createCard(card: CardEntity): CardEntity {
         val cardNumber = generateCardNumber()
-
-        val token = if (request.cardType.uppercase() == "VIRTUAL") generateToken() else null
-
-        val now = LocalDateTime.now()
-        val expiresAt = now.plusYears(5)
-
-        val card = CardEntity(
-            cardNumber = cardNumber,
-            token = token,
-            cardType = request.cardType.uppercase(),
-            isActive = true,
-            createdAt = now,
-            expiresAt = expiresAt,
-            account = tempAccount,
-            pot = tempPot
-        )
-
+        val token = generateToken()
+        card.cardNumber = cardNumber
+        card.token = token
         return cardRepository.save(card)
+    }
+
+    fun deleteCard(id: Long) {
+        val existingCard = getCardById(id)
+        cardRepository.delete(existingCard)
+    }
+
+    private fun checkAndMarkExpired(card: CardEntity) {
+        if (card.expiresAt.isBefore(LocalDateTime.now()) && card.isActive) {
+            card.isActive = false
+            cardRepository.save(card)
+        }
     }
 
     private fun generateCardNumber(): String {
@@ -50,5 +50,20 @@ class CardService(
 
     private fun generateToken(): String {
         return UUID.randomUUID().toString().replace("-", "").take(16)
+    }
+
+    fun checkCardStatus(id: Long, date: LocalDateTime? = null): CardEntity {
+        val actualDate = date ?: LocalDateTime.now()
+        val card = getCardById(id)
+
+        if (card.expiresAt.isBefore(actualDate)) {
+            if (card.isActive) {
+                card.isActive = false
+                cardRepository.save(card)
+            }
+            throw BankingBadRequestException("Card expired. Please visit the nearest branch to renew.")
+        }
+
+        return card
     }
 }

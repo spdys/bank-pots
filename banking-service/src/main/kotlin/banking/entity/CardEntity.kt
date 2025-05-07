@@ -9,10 +9,10 @@ data class CardEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
-    val cardNumber: String,
-    val token: String? = null,
+    var cardNumber: String,
+    var token: String? = null,
     val cardType: String,
-    val isActive: Boolean = true,
+    var isActive: Boolean = true,
     val createdAt: LocalDateTime = LocalDateTime.now(),
     val expiresAt: LocalDateTime,
 
