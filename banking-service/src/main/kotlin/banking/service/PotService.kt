@@ -8,6 +8,7 @@ import banking.entity.AccountEntity
 import banking.entity.PotEntity
 import banking.repository.AccountRepository
 import banking.repository.PotRepository
+import banking.security.UserPrincipal
 import org.springframework.stereotype.Service
 
 @Service
@@ -15,10 +16,15 @@ class PotService(
     private val accountRepository: AccountRepository,
     private val potRepository: PotRepository
 ) {
-    fun createPot(accountId: Long, request: PotRequest): PotResponse {
+    fun createPot(accountId: Long, request: PotRequest, principal: UserPrincipal): PotResponse {
         // checking if account exists
         val account = accountRepository.findById(accountId)
             .orElseThrow { BankingNotFoundException("Account not found with id $accountId") }
+
+        // check if accountId is associated with principal's ID
+        if(account.userId != principal.getUserId()) {
+            throw BankingNotFoundException("User ID mismatch.")
+        }
 
         // checking account type
         if (account.accountType != AccountEntity.AccountType.MAIN) {
