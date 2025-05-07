@@ -20,7 +20,7 @@ class AccountService(
 ) {
     fun createAccount(request: CreateAccountRequest, principal: UserPrincipal): AccountResponse {
         // check if user already has a main account, throw exception if so
-        val existingMain = accountRepository.findByUserId(principal.getUserId() ?: 0)
+        val existingMain = accountRepository.findAllByUserId(principal.getUserId() ?: 0)
             .any { it.accountType == AccountEntity.AccountType.MAIN }
 
         if (request.accountType == AccountEntity.AccountType.MAIN && existingMain) {

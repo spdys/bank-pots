@@ -8,21 +8,35 @@ import banking.entity.AccountEntity
 import banking.entity.PotEntity
 import banking.repository.AccountRepository
 import banking.repository.PotRepository
+import banking.security.UserPrincipal
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 
 @Service
 class PotService(
     private val accountRepository: AccountRepository,
     private val potRepository: PotRepository
 ) {
-    fun createPot(accountId: Long, request: PotRequest): PotResponse {
+    fun createPot(accountId: Long, request: PotRequest, principal: UserPrincipal): PotResponse {
         // checking if account exists
         val account = accountRepository.findById(accountId)
             .orElseThrow { BankingNotFoundException("Account not found with id $accountId") }
 
+        // check if accountId is associated with principal's ID
+        if(account.userId != principal.getUserId()) {
+            throw BankingNotFoundException("User ID mismatch.")
+        }
+
         // checking account type
         if (account.accountType != AccountEntity.AccountType.MAIN) {
             throw BankingBadRequestException("Pots can only be created for MAIN accounts.") as Throwable
+        }
+
+        // checking if user already has maximum pots (6)
+        val potCount = potRepository.countByAccountId(account.id)
+
+        if (potCount >= 6) {
+            throw BankingBadRequestException("This account already has the maximum number of pots (6).")
         }
 
         // checking if pot name already exists
@@ -31,6 +45,11 @@ class PotService(
 
         if (existingPotName) {
             throw BankingBadRequestException("A pot with name '${request.name}' already exists in this account.")
+        }
+
+        // checking if allocation value is positive number
+        if (request.allocationValue <= BigDecimal.ZERO) {
+            throw BankingBadRequestException("Allocation value cannot be zero or negative.")
         }
 
         val pot = PotEntity(

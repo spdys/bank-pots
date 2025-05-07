@@ -28,15 +28,15 @@ class AccountController(
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
-//    @PostMapping("/accounts/v1/{accountId}/pots")
-//    fun createPot(
-//        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
-//        @PathVariable accountId: Long,
-//        @RequestBody request: PotRequest
-//    ): ResponseEntity<PotResponse> {
-//        val response = potService.createPot(accountId, request)
-//        return ResponseEntity.status(HttpStatus.CREATED).body(response)
-//    }
+    @PostMapping("/accounts/v1/{accountId}/pots")
+    fun createPot(
+        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
+        @PathVariable accountId: Long,
+        @RequestBody request: PotRequest
+    ): ResponseEntity<PotResponse> {
+        val response = potService.createPot(accountId, request, principal)
+        return ResponseEntity.status(HttpStatus.CREATED).body(response)
+    }
 //
 //    @PostMapping("/accounts/v1/{accountId}/pots/{potId}")
 //    fun editPot(
