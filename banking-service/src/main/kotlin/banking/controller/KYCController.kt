@@ -1,38 +1,38 @@
 package banking.controller
 
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-import banking.dto.KYCFlagRequest
 import banking.dto.KYCRequest
+import banking.security.UserPrincipal
 import banking.service.KYCService
+import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1/kyc")
 class KYCController(kycService: KYCService, private val kYCService: KYCService) {
 
 
+
     @PostMapping
-    fun submitKYC(@RequestBody kycRequest: KYCRequest): ResponseEntity<Any> {
-        return kYCService.createOrUpdateKYC(kycRequest)
+    fun submitKYC(
+        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
+        @RequestBody kycRequest: KYCRequest
+    ): ResponseEntity<Any> {
+        return kYCService.createOrUpdateKYC(kycRequest, principal)
     }
 
-    @GetMapping("/{userId}")
-    fun getKYC(@PathVariable userId: Long): ResponseEntity<Any> {
-        return kYCService.getKYC(userId)
+    @GetMapping
+    fun getKYC(@AuthenticationPrincipal principal: UserPrincipal): ResponseEntity<Any> {
+        return kYCService.getKYC(principal.getUserId() ?: 0) // no id == 0
     }
 
-    // Re-send request to unflag
-    // TODO(Make it for admins only!)
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/flag")
-    fun flagKYC(@RequestBody userIdRequest: KYCFlagRequest): ResponseEntity<Any> {
-        return kYCService.flagOrUnflagKYC(userIdRequest.userId)
+    fun flagKYC(@AuthenticationPrincipal principal: banking.security.UserPrincipal): ResponseEntity<Any> {
+        println(principal.getId().toString())
+        return kYCService.flagOrUnflagKYC(principal.getId()!!)
     }
-
 
 
 }

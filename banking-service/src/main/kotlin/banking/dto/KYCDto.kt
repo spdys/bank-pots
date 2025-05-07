@@ -3,7 +3,7 @@ package banking.dto
 
 
 data class KYCRequest(
-    val userId: Long,
+//    val userId: Long,
     val fullName: String,
     val phone: String,
     val email: String,
