@@ -23,12 +23,4 @@ class GlobalExceptionHandler {
             .status(HttpStatus.NOT_FOUND)
             .body(FailureResponse(ex.message ?: "Not found."))
     }
-
-    // Catch other unhandled exceptions and return a generic message
-    @ExceptionHandler(Exception::class)
-    fun handleGeneralException(ex: Exception): ResponseEntity<FailureResponse> {
-        return ResponseEntity
-            .status(HttpStatus.BAD_REQUEST)
-            .body(FailureResponse(ex.message ?: "An unexpected error occurred."))
-    }
 }
