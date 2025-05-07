@@ -54,7 +54,7 @@ class AccountController(
 //        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
 //        @PathVariable accountId: Long
 //    ): ResponseEntity<AccountSummaryDto> {
-//        val response = accountService.getAccountSummary(accountId)
+//        val response = accountService.getAccountSummary(accountId, principal)
 //        return ResponseEntity.ok(response)
 //    }
 //
