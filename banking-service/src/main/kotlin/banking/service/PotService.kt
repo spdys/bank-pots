@@ -70,10 +70,15 @@ class PotService(
         )
     }
 
-    fun editPot(accountId: Long, potId: Long, request: PotRequest): PotResponse{
+    fun editPot(accountId: Long, potId: Long, request: PotRequest, principal: UserPrincipal): PotResponse{
         // checking if account exists
         val account = accountRepository.findById(accountId)
             .orElseThrow { BankingNotFoundException("Account not found with id $accountId.") }
+
+        // check if accountId is associated with principal's ID
+        if(account.userId != principal.getUserId()) {
+            throw BankingNotFoundException("User ID mismatch.")
+        }
 
         // checking account type
         if (account.accountType != AccountEntity.AccountType.MAIN) {
@@ -96,6 +101,8 @@ class PotService(
         if (conflictingName) {
             throw BankingBadRequestException("Another pot with name '${request.name}' already exists in this account.")
         }
+
+        if (request.allocationValue <= BigDecimal.ZERO) throw BankingBadRequestException("Allocation value cannot be zero or negative.")
 
         val updatedPot = pot.copy(
             name = request.name,
