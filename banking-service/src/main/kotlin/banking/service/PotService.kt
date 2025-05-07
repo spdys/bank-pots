@@ -10,6 +10,7 @@ import banking.repository.AccountRepository
 import banking.repository.PotRepository
 import banking.security.UserPrincipal
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 
 @Service
 class PotService(
@@ -31,12 +32,24 @@ class PotService(
             throw BankingBadRequestException("Pots can only be created for MAIN accounts.") as Throwable
         }
 
+        // checking if user already has maximum pots (6)
+        val potCount = potRepository.countByAccountId(account.id)
+
+        if (potCount >= 6) {
+            throw BankingBadRequestException("This account already has the maximum number of pots (6).")
+        }
+
         // checking if pot name already exists
         val existingPotName = potRepository.findByAccountId(account.id)
             .any { it.name.equals(request.name, ignoreCase = true) }
 
         if (existingPotName) {
             throw BankingBadRequestException("A pot with name '${request.name}' already exists in this account.")
+        }
+
+        // checking if allocation value is positive number
+        if (request.allocationValue <= BigDecimal.ZERO) {
+            throw BankingBadRequestException("Allocation value cannot be zero or negative.")
         }
 
         val pot = PotEntity(
