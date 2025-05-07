@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 data class CreateAccountRequest(
-    val userId: Long,
+    // val userId: Long,
     val accountType: AccountEntity.AccountType
 )
 

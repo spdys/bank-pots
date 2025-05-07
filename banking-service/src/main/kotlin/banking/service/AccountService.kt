@@ -10,6 +10,7 @@ import banking.dto.PotSummaryDto
 import banking.entity.AccountEntity
 import banking.repository.AccountRepository
 import banking.repository.PotRepository
+import banking.security.UserPrincipal
 import org.springframework.stereotype.Service
 
 @Service
@@ -17,9 +18,9 @@ class AccountService(
     private val accountRepository: AccountRepository,
     private val potRepository: PotRepository
 ) {
-    fun createAccount(request: CreateAccountRequest): AccountResponse {
+    fun createAccount(request: CreateAccountRequest, principal: UserPrincipal): AccountResponse {
         // check if user already has a main account, throw exception if so
-        val existingMain = accountRepository.findByUserId(request.userId)
+        val existingMain = accountRepository.findByUserId(principal.getUserId() ?: 0)
             .any { it.accountType == AccountEntity.AccountType.MAIN }
 
         if (request.accountType == AccountEntity.AccountType.MAIN && existingMain) {
@@ -30,7 +31,7 @@ class AccountService(
         val accountNumber = "ACC$randomDigits"
 
         val account = AccountEntity(
-            userId = request.userId,
+            userId = principal.getUserId() ?: 0,
             accountNumber = accountNumber,
             accountType = request.accountType
         )
