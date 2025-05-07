@@ -7,6 +7,7 @@ import banking.dto.KYCRequest
 import banking.dto.KYCResponse
 import banking.entity.KYCEntity
 import banking.repository.KYCRepository
+import banking.security.UserPrincipal
 import banking.service.validation.KWCivilIDValidator
 
 @Service
@@ -22,13 +23,14 @@ class KYCService(private val kYCRepository: KYCRepository) {
         }
     }
 
-    fun createOrUpdateKYC(kycRequest: KYCRequest): ResponseEntity<Any> {
+    fun createOrUpdateKYC(kycRequest: KYCRequest, principal: UserPrincipal): ResponseEntity<Any> {
 
         validateFullName(kycRequest.fullName) // throws PotsBadRequestException | runtime
         KWCivilIDValidator.validate(kycRequest.civilId) // throws PotsNotFoundException | runtime
+
         val kyc =
-            if (kYCRepository.existsByUserId(kycRequest.userId)) {
-                kYCRepository.findByUserId(kycRequest.userId)?.copy(
+            if (kYCRepository.existsByUserId(principal.getUserId() ?: 0)) {
+                kYCRepository.findByUserId(principal.getUserId() ?: 0)?.copy(
                     fullName = kycRequest.fullName,
                     phone = kycRequest.phone,
                     email = kycRequest.email,
@@ -37,7 +39,7 @@ class KYCService(private val kYCRepository: KYCRepository) {
                     ?: throw BankingNotFoundException("Kyc entity not found.")
             } else
                 KYCEntity(
-                    userId = kycRequest.userId,
+                    userId = principal.getUserId() ?: 0,
                     fullName = kycRequest.fullName,
                     phone = kycRequest.phone,
                     email = kycRequest.email,
