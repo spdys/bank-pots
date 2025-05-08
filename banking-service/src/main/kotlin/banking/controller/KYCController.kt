@@ -16,7 +16,7 @@ class KYCController(kycService: KYCService, private val kYCService: KYCService) 
 
     @PostMapping
     fun submitKYC(
-        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
+        @AuthenticationPrincipal principal: UserPrincipal,
         @RequestBody kycRequest: KYCRequest
     ): ResponseEntity<Any> {
         return kYCService.createOrUpdateKYC(kycRequest, principal)
