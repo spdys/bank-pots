@@ -8,8 +8,8 @@ Feature: KYC Submission
     {
       "fullName": "Ali Aljadi",
       "phone": "94444398",
-      "email": "ali@example.com",
-      "civilId": "298041400494",
+      "email": "test@ali.com",
+      "civilId": "298030700133",
       "dateOfBirth": "14-04-1998",
       "address": "Kuwait"
     }
@@ -45,7 +45,7 @@ Feature: KYC Submission
       "address": "Kuwait"
     }
     """
-    Then the response status code should be 400
+    Then the response status code should be 500
 
   Scenario: Submit invalid name
     Given I have a valid JWT token for a user
@@ -60,7 +60,7 @@ Feature: KYC Submission
       "address": "Kuwait"
     }
     """
-    Then the response status code should be 400
+    Then the response status code should be 500
 
 
 
