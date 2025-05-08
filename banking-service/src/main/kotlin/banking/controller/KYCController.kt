@@ -28,11 +28,8 @@ class KYCController(kycService: KYCService, private val kYCService: KYCService) 
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/flag")
-    fun flagKYC(@AuthenticationPrincipal principal: banking.security.UserPrincipal): ResponseEntity<Any> {
-        println(principal.getId().toString())
-        return kYCService.flagOrUnflagKYC(principal.getId()!!)
+    @PostMapping("/flag/{targetUserId}")
+    fun flagKYC(@PathVariable targetUserId: Long): ResponseEntity<Any> {
+        return kYCService.flagOrUnflagKYC(targetUserId)
     }
-
-
 }
