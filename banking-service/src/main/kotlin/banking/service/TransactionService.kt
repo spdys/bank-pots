@@ -1,6 +1,7 @@
 package banking.service
 
 import banking.BankingBadRequestException
+import banking.BankingNotFoundException
 import banking.entity.AccountEntity
 import banking.entity.TransactionEntity
 import banking.repository.AccountRepository
