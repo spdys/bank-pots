@@ -5,4 +5,4 @@ Feature: Flag KYC Endpoint
 
   Scenario: Fail to flag a KYC and deny access
     When I call the flag KYC endpoint
-    Then the response status code should be 400
+    Then the response status code should be 403
