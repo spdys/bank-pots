@@ -1,8 +1,8 @@
-package com.banking.bankingservice.service
+package banking.service
 
 import banking.BankingBadRequestException
-import com.banking.bankingservice.entity.CardEntity
-import com.banking.bankingservice.repository.CardRepository
+import banking.entity.CardEntity
+import banking.repository.CardRepository
 import banking.BankingNotFoundException
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime

@@ -1,6 +1,6 @@
-package com.banking.bankingservice.repository
+package banking.repository
 
-import com.banking.bankingservice.entity.TransactionEntity
+import banking.entity.TransactionEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 

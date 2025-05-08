@@ -1,7 +1,7 @@
-package com.banking.bankingservice.controller
+package banking.controller
 
-import com.banking.bankingservice.entity.CardEntity
-import com.banking.bankingservice.service.CardService
+import banking.entity.CardEntity
+import banking.service.CardService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 

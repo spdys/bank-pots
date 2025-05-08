@@ -1,7 +1,7 @@
-package com.banking.bankingservice.controller
+package banking.controller
 
-import com.banking.bankingservice.entity.TransactionEntity
-import com.banking.bankingservice.service.TransactionService
+import banking.entity.TransactionEntity
+import banking.service.TransactionService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDateTime

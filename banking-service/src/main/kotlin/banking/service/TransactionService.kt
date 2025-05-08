@@ -1,10 +1,11 @@
-package com.banking.bankingservice.service
+package banking.service
 
 import banking.BankingBadRequestException
-import com.banking.bankingservice.entity.TransactionEntity
-import com.banking.bankingservice.repository.TransactionRepository
-import com.banking.bankingservice.repository.PotRepository
-import com.banking.bankingservice.repository.AccountRepository
+import banking.entity.AccountEntity
+import banking.entity.TransactionEntity
+import banking.repository.AccountRepository
+import banking.repository.PotRepository
+import banking.repository.TransactionRepository
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -29,7 +30,7 @@ class TransactionService(
         }
 
         //  if it is a salary deposit enforce deposit to  main
-        if (isSalary && account.accountType != "MAIN") {
+        if (isSalary && account.accountType != AccountEntity.AccountType.MAIN) {
             throw BankingBadRequestException("Salary can only be deposited into the main account")
         }
 
