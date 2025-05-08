@@ -9,12 +9,14 @@ data class TransactionEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
+
+    val cardId: Long? = null,
+    val token: String? = null,
+    val sourceId: Long? = null, // optional, null for deposits
+    val destinationId: Long? = null,
     val amount: Double,
     val transactionType: String,
-    val description: String? = null,
-    val sourceId: Long? = null,
-    val destinationId: Long,
-    val balanceBefore: Double,
-    val balanceAfter: Double,
+    val description: String,
+    val balance: Double,
     val createdAt: LocalDateTime = LocalDateTime.now()
 )
