@@ -20,7 +20,7 @@ class AccountService(
 ) {
     fun createAccount(request: CreateAccountRequest, principal: UserPrincipal): AccountResponse {
         // check if user already has a main account, throw exception if so
-        val existingMain = accountRepository.findAllByUserId(principal.getUserId() ?: 0)
+        val existingMain = accountRepository.findAllByUserId(principal.getId() ?: 0)
             .any { it.accountType == AccountEntity.AccountType.MAIN }
 
         if (request.accountType == AccountEntity.AccountType.MAIN && existingMain) {
@@ -31,7 +31,7 @@ class AccountService(
         val accountNumber = "ACC$randomDigits"
 
         val account = AccountEntity(
-            userId = principal.getUserId() ?: 0,
+            userId = principal.getId() ?: 0,
             accountNumber = accountNumber,
             accountType = request.accountType
         )
@@ -53,7 +53,7 @@ class AccountService(
             .orElseThrow { BankingNotFoundException("Account not found with id $accountId.") }
 
         // check if accountId is associated with principal's ID
-        if(account.userId != principal.getUserId()) {
+        if(account.userId != principal.getId()) {
             throw BankingNotFoundException("User ID mismatch.")
         }
 
