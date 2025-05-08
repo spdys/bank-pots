@@ -1,4 +1,4 @@
-package com.banking.bankingservice.entity
+package banking.entity
 
 import java.time.LocalDateTime
 import jakarta.persistence.*

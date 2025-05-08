@@ -1,4 +1,4 @@
-package com.banking.bankingservice.entity
+package banking.entity
 
 import jakarta.persistence.*
 import java.time.LocalDateTime
@@ -18,9 +18,9 @@ data class CardEntity(
 
     @ManyToOne
     @JoinColumn(name = "account_id")
-    val account: Account? = null,
+    val account: AccountEntity? = null,
 
     @ManyToOne
     @JoinColumn(name = "pot_id")
-    val pot: Pot? = null
+    val pot: PotEntity? = null
 )

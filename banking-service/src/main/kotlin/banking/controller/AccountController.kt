@@ -6,6 +6,7 @@ import banking.dto.CloseAccountResponse
 import banking.dto.CreateAccountRequest
 import banking.dto.PotRequest
 import banking.dto.PotResponse
+import banking.security.UserPrincipal
 import banking.service.AccountService
 import banking.service.PotService
 import org.springframework.web.bind.annotation.*
@@ -21,7 +22,7 @@ class AccountController(
 ) {
     @PostMapping("/accounts/v1/create")
     fun createAccount(
-        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
+        @AuthenticationPrincipal principal: UserPrincipal,
         @RequestBody request: CreateAccountRequest
     ): ResponseEntity<AccountResponse> {
         val response = accountService.createAccount(request, principal)
@@ -30,7 +31,7 @@ class AccountController(
 
     @PostMapping("/accounts/v1/{accountId}/pots")
     fun createPot(
-        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
+        @AuthenticationPrincipal principal: UserPrincipal,
         @PathVariable accountId: Long,
         @RequestBody request: PotRequest
     ): ResponseEntity<PotResponse> {
@@ -40,7 +41,7 @@ class AccountController(
 
     @PostMapping("/accounts/v1/{accountId}/pots/{potId}")
     fun editPot(
-        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
+        @AuthenticationPrincipal principal: UserPrincipal,
         @PathVariable accountId: Long,
         @PathVariable potId: Long,
         @RequestBody request: PotRequest
@@ -51,7 +52,7 @@ class AccountController(
 
     @GetMapping("/accounts/v1/{accountId}/summary")
     fun getAccountSummary(
-        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
+        @AuthenticationPrincipal principal: UserPrincipal,
         @PathVariable accountId: Long
     ): ResponseEntity<AccountSummaryDto> {
         val response = accountService.getAccountSummary(accountId, principal)
@@ -60,10 +61,7 @@ class AccountController(
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/v1/accounts/{accountId}/close")
-    fun closeAccount(
-        @AuthenticationPrincipal principal: banking.security.UserPrincipal,
-        @PathVariable accountId: Long
-    ): ResponseEntity<CloseAccountResponse> {
+    fun closeAccount(@PathVariable accountId: Long): ResponseEntity<CloseAccountResponse> {
         val response = accountService.closeAccount(accountId)
         return ResponseEntity.ok(response)
     }
