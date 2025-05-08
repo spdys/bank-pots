@@ -26,7 +26,7 @@ class TransactionService(
 
         //  if the account exists, retrieve its type
         val account = accountRepository.findById(accountId).orElseThrow {
-            BankingBadRequestException("Account with ID $accountId not found")
+            BankingNotFoundException("Account with ID $accountId not found")
         }
 
         //  if it is a salary deposit enforce deposit to  main
