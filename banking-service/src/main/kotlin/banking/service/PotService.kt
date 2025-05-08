@@ -23,7 +23,7 @@ class PotService(
             .orElseThrow { BankingNotFoundException("Account not found with id $accountId") }
 
         // check if accountId is associated with principal's ID
-        if(account.userId != principal.getUserId()) {
+        if(account.userId != principal.getId()) {
             throw BankingNotFoundException("User ID mismatch.")
         }
 
@@ -76,7 +76,7 @@ class PotService(
             .orElseThrow { BankingNotFoundException("Account not found with id $accountId.") }
 
         // check if accountId is associated with principal's ID
-        if(account.userId != principal.getUserId()) {
+        if(account.userId != principal.getId()) {
             throw BankingNotFoundException("User ID mismatch.")
         }
 
