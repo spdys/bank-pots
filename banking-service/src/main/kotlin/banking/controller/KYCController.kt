@@ -24,7 +24,7 @@ class KYCController(kycService: KYCService, private val kYCService: KYCService) 
 
     @GetMapping
     fun getKYC(@AuthenticationPrincipal principal: UserPrincipal): ResponseEntity<Any> {
-        return kYCService.getKYC(principal.getUserId() ?: 0) // no id == 0
+        return kYCService.getKYC(principal.getId() ?: 0) // no id == 0
     }
 
     @PreAuthorize("hasRole('ADMIN')")
