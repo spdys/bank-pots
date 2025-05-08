@@ -21,6 +21,8 @@ import org.springframework.http.ResponseEntity
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class BankingSteps {
 
+
+
     @Autowired
     lateinit var testRestTemplate: TestRestTemplate
 
@@ -31,7 +33,7 @@ class BankingSteps {
     fun iHaveValidJWTTokenForUser() {
         val loginPayload = """
         {
-            "username": "ahjadi",
+            "username": "testuser",
             "password": "Password123"
         }
         """
@@ -55,7 +57,7 @@ class BankingSteps {
         val loginPayload = """
         {
             "username": "adminuser",
-            "password": "AdminPass123"
+            "password": "Password123"
         }
         """
         val headers = HttpHeaders()
@@ -107,5 +109,28 @@ class BankingSteps {
     fun thenKYCStatusShouldBe(statusCode: Int) {
         assertEquals(statusCode, response?.statusCode?.value())
     }
+
+    @When("I create a {string} account")
+    fun iCreateAnAccount(accountType: String) {
+        val payload = """
+    {
+        "accountType": "$accountType"
+    }
+    """.trimIndent()
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/accounts/v1/create",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
 
 }
