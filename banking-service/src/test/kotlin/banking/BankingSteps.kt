@@ -248,4 +248,35 @@ class BankingSteps {
             )
         }
     }
+
+    @When("I close account ID from stored account")
+    fun iCloseStoredAccountAsAdmin() {
+        val headers = HttpHeaders()
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(null, headers)
+
+        response = testRestTemplate.exchange(
+            "/admin/v1/accounts/$storedAccountId/close",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @When("I close account ID {long}")
+    fun iCloseAccountById(accountId: Long) {
+        val headers = HttpHeaders()
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(null, headers)
+
+        response = testRestTemplate.exchange(
+            "/admin/v1/accounts/$accountId/close",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
 }
