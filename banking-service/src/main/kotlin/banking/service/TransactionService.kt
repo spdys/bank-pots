@@ -10,6 +10,7 @@ import banking.repository.PotRepository
 import banking.repository.TransactionRepository
 import banking.security.UserPrincipal
 import com.banking.bankingservice.dto.DepositSalaryResponse
+import com.banking.bankingservice.dto.PotDepositResponse
 import com.banking.bankingservice.dto.PotWithdrawalResponse
 import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
@@ -155,10 +156,6 @@ PURCHASE,
             throw BankingNotFoundException("Destination account not found with id $parentAccountId")
         }
 
-
-
-
-
         val potParentAccount = accountRepository.findById(parentAccountId)
             .orElseThrow { BankingNotFoundException("Account not found with id $parentAccountId") }
         val potParentAccountUserId = potParentAccount.userId
@@ -201,8 +198,72 @@ PURCHASE,
         )
     }
 
-    fun withdrawFromMainOrSavingAccount(sourceId: Long, destinationId: Long, amount: BigDecimal) {
-        // destination could be main or pot
+    @Transactional
+    fun manualDepositFromMainOrSavingsToPot(
+        sourceAccountId: Long,
+        destinationPotId: Long,
+        amount: BigDecimal,
+        principal: UserPrincipal): PotDepositResponse {
+
+        // check existence before retrieving entity > better performance
+        if (!accountRepository.existsById(sourceAccountId)) {
+            throw BankingNotFoundException("Source account not found with id $sourceAccountId")
+        }
+
+        if (!potRepository.existsById(destinationPotId)) {
+            throw BankingNotFoundException("Destination pot not found with id $destinationPotId")
+        }
+
+        val sourceAccount = accountRepository.findById(sourceAccountId)
+            .orElseThrow { BankingNotFoundException("Account not found with id $sourceAccountId") }
+
+        val pot = potRepository.findById(destinationPotId)
+            .orElseThrow { BankingNotFoundException("Pot not found with id $destinationPotId") }
+
+        // authorization
+        if (sourceAccount.userId != principal.getId()) {
+            throw BankingNotFoundException("User ID mismatch.")
+        }
+
+        // validate pot belongs to the account
+        if (pot.accountId != sourceAccountId) {
+            throw BankingBadRequestException("Pot does not belong to the specified account.")
+        }
+
+        // validate amount
+        if (amount > sourceAccount.balance) {
+            throw BankingBadRequestException("Transfer amount exceeds account balance.")
+        }
+        if (amount <= BigDecimal.ZERO) {
+            throw BankingBadRequestException("Transfer amount must be non-negative.")
+        }
+
+        val accountBalanceBefore = sourceAccount.balance
+
+        // Update balances
+        pot.balance += amount
+        potRepository.save(pot)
+
+        sourceAccount.balance -= amount
+        accountRepository.save(sourceAccount)
+
+        val transaction = TransactionEntity(
+            sourceId = sourceAccount.id,
+            destinationId = pot.id,
+            amount = amount,
+            balanceBefore = accountBalanceBefore,
+            balanceAfter = sourceAccount.balance,
+            transactionType = TransactionEntity.TransactionType.TRANSFER,
+            description = "Manual transfer from account to pot: '${pot.name}'"
+        )
+
+        transactionRepository.save(transaction)
+
+        return PotDepositResponse(
+            newPotBalance = pot.balance,
+            newAccountBalance = sourceAccount.balance
+        )
+
     }
 
 

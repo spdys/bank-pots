@@ -4,6 +4,8 @@ import banking.security.UserPrincipal
 import banking.service.TransactionService
 import com.banking.bankingservice.dto.DepositSalaryRequest
 import com.banking.bankingservice.dto.DepositSalaryResponse
+import com.banking.bankingservice.dto.PotDepositRequest
+import com.banking.bankingservice.dto.PotDepositResponse
 import com.banking.bankingservice.dto.PotWithdrawalRequest
 import com.banking.bankingservice.dto.PotWithdrawalResponse
 import org.springframework.http.ResponseEntity
@@ -44,6 +46,21 @@ class TransactionController(
                 principal
             )
         )
+    }
+
+    @PostMapping("v1/pot/deposit")
+    fun depositToPot(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @RequestBody request: PotDepositRequest
+    ) : ResponseEntity<PotDepositResponse>{
+
+        return ResponseEntity.ok().body(transactionService.manualDepositFromMainOrSavingsToPot(
+            sourceAccountId = request.sourceAccountId,
+            destinationPotId = request.destinationPotId,
+            amount = request.amount,
+            principal = principal
+        ))
+
     }
 
 
