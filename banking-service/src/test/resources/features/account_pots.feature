@@ -45,3 +45,15 @@ Feature: User account and pot operations
     And I create 6 pots in the stored account
     And I create a pot in the stored account with name "Overflow", allocation type "FIXED", and value 10.0
     Then the response status code should be 400
+
+  Scenario: Fail to create pot on SAVINGS account
+    When I create a "SAVINGS" account
+    And I store the returned account ID
+    And I create a pot in the stored account with name "Invalid", allocation type "FIXED", and value 10.0
+    Then the response status code should be 400
+
+  Scenario: Fail to edit a nonexistent pot
+    When I create a "MAIN" account
+    And I store the returned account ID
+    And I edit pot ID 999 in the stored account with name "Ghost", allocation type "FIXED", and value 10.0
+    Then the response status code should be 404
