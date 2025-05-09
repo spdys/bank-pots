@@ -1,4 +1,4 @@
-package com.banking.bankingservice.dto
+package banking.dto
 
 import banking.entity.TransactionEntity
 import java.math.BigDecimal

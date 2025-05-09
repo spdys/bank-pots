@@ -2,9 +2,16 @@ package banking.controller
 
 import banking.dto.CardPaymentRequest
 import banking.dto.CardPaymentResponse
+import banking.dto.DepositSalaryRequest
+import banking.dto.DepositSalaryResponse
+import banking.dto.PotDepositRequest
+import banking.dto.PotDepositResponse
+import banking.dto.PotWithdrawalRequest
+import banking.dto.PotWithdrawalResponse
+import banking.dto.TransactionHistoryRequest
+import banking.dto.TransactionHistoryResponse
 import banking.security.UserPrincipal
 import banking.service.TransactionService
-import com.banking.bankingservice.dto.*
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal

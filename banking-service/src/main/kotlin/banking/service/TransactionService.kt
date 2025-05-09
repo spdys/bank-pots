@@ -13,11 +13,11 @@ import banking.repository.CardRepository
 import banking.repository.PotRepository
 import banking.repository.TransactionRepository
 import banking.security.UserPrincipal
-import com.banking.bankingservice.dto.DepositSalaryResponse
-import com.banking.bankingservice.dto.PotDepositResponse
-import com.banking.bankingservice.dto.PotWithdrawalResponse
-import com.banking.bankingservice.dto.TransactionHistoryResponse
-import com.banking.bankingservice.dto.toHistoryResponse
+import banking.dto.DepositSalaryResponse
+import banking.dto.PotDepositResponse
+import banking.dto.PotWithdrawalResponse
+import banking.dto.TransactionHistoryResponse
+import banking.dto.toHistoryResponse
 import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
