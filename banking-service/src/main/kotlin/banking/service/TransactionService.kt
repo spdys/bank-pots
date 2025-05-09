@@ -4,7 +4,6 @@ import banking.BankingNotFoundException
 import banking.entity.AccountEntity
 import banking.entity.PotEntity
 import banking.entity.TransactionEntity
-import banking.entity.TransactionType
 import banking.repository.AccountRepository
 import banking.repository.PotRepository
 import banking.repository.TransactionRepository
@@ -20,7 +19,6 @@ class TransactionService(
     private val potRepository: PotRepository,
     private val accountRepository: AccountRepository
 ) {
-
     /*
     DEPOSIT,
     WITHDRAW,
@@ -41,7 +39,7 @@ class TransactionService(
             destinationId = destinationId,
             amount = amount,
             description = description,
-            transactionType = TransactionType.DEPOSIT,
+            transactionType = TransactionEntity.TransactionType.DEPOSIT,
             balanceBefore = balanceBefore,
             balanceAfter = balanceAfter,
         )
@@ -87,7 +85,7 @@ class TransactionService(
                         destinationId = destinationAccount.id,
                         amount = allocationPerPot,
                         description = "Auto transfer from SALARY to ${pot.name}",
-                        transactionType = TransactionType.TRANSFER,
+                        transactionType = TransactionEntity.TransactionType.TRANSFER,
                         balanceBefore = potBalanceBefore,
                         balanceAfter = pot.balance
                     )

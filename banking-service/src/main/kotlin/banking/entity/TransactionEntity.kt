@@ -20,6 +20,7 @@ data class TransactionEntity(
 
     @Enumerated(EnumType.STRING)
     var transactionType: TransactionType,
+
     var description: String? = null,
     var balanceBefore: BigDecimal,
     var balanceAfter: BigDecimal,
@@ -41,6 +42,5 @@ enum class TransactionType{
         if (amount < BigDecimal.ZERO) {
             throw BankingBadRequestException("Amount cannot be negative.")
         }
-
     }
 }
