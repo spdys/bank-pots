@@ -1,17 +1,36 @@
-//package banking.controller
-//
-//import banking.entity.TransactionEntity
-//import banking.service.TransactionService
-//import org.springframework.http.ResponseEntity
-//import org.springframework.web.bind.annotation.*
-//import java.time.LocalDateTime
-//
-//@RestController
-//@RequestMapping("/transactions")
-//class TransactionController(
-//    private val transactionService: TransactionService
-//) {
-//
+package banking.controller
+
+import banking.security.UserPrincipal
+import banking.service.TransactionService
+import com.banking.bankingservice.dto.DepositSalaryRequest
+import com.banking.bankingservice.dto.DepositSalaryResponse
+import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+
+@RestController
+@RequestMapping("/transactions")
+class TransactionController(
+    private val transactionService: TransactionService
+) {
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PostMapping("/v1/salary")
+    fun depositSalaryToAccount(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @RequestBody request: DepositSalaryRequest
+    ): ResponseEntity<DepositSalaryResponse> {
+        val transaction =
+            transactionService.depositSalaryToAccount(destinationId = request.destinationId, amount = request.amount)
+
+        return ResponseEntity.ok(transaction)
+    }
+
+
 //    @PostMapping("/deposit")
 //    fun deposit(
 //        @RequestBody request: Map<String, Any>
@@ -60,4 +79,4 @@
 //        val transactions = transactionService.getTransactions(accountId, limit)
 //        return ResponseEntity.ok(transactions)
 //    }
-//}
+}

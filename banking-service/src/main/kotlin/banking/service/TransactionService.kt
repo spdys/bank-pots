@@ -1,22 +1,58 @@
-//package banking.service
-//
-//import banking.BankingBadRequestException
-//import banking.BankingNotFoundException
-//import banking.entity.AccountEntity
-//import banking.entity.TransactionEntity
-//import banking.repository.AccountRepository
-//import banking.repository.PotRepository
-//import banking.repository.TransactionRepository
-//import org.springframework.stereotype.Service
-//import java.time.LocalDateTime
-//
-//@Service
-//class TransactionService(
-//    private val transactionRepository: TransactionRepository,
-//    private val cardService: CardService,
-//    private val potRepository: PotRepository,
-//    private val accountRepository: AccountRepository
-//) {
+package banking.service
+
+import banking.BankingNotFoundException
+import banking.entity.TransactionEntity
+import banking.entity.TransactionType
+import banking.repository.AccountRepository
+import banking.repository.PotRepository
+import banking.repository.TransactionRepository
+import com.banking.bankingservice.dto.DepositSalaryResponse
+import org.springframework.stereotype.Service
+import java.math.BigDecimal
+
+@Service
+class TransactionService(
+    private val transactionRepository: TransactionRepository,
+    private val cardService: CardService,
+    private val potRepository: PotRepository,
+    private val accountRepository: AccountRepository
+) {
+
+    /*
+    DEPOSIT,
+    WITHDRAW,
+    TRANSFER,
+    PURCHASE,
+    */
+    fun depositSalaryToAccount(destinationId: Long, amount: BigDecimal): DepositSalaryResponse {
+
+        val destinationAccount = accountRepository.findById(destinationId)
+            .orElseThrow { BankingNotFoundException("NO DESTINATION ACCOUNT FOUND") }
+
+        val balanceBefore = destinationAccount.balance
+        val balanceAfter = balanceBefore.plus(amount)
+        val description = "SALARY"
+
+        destinationAccount.balance = balanceAfter
+        accountRepository.save(destinationAccount)
+        val transaction = TransactionEntity(
+            destinationId = destinationId,
+            amount = amount,
+            description = description,
+            transactionType = TransactionType.DEPOSIT,
+            balanceBefore = balanceBefore,
+            balanceAfter = balanceAfter,
+        )
+        transactionRepository.save(transaction)
+        return DepositSalaryResponse(
+            destinationId = destinationId,
+            balanceBefore = balanceBefore,
+            balanceAfter = balanceAfter
+        )
+
+    }
+
+
 //
 //    private fun calculateBalance(currentBalance: Double, amount: Double, isDeposit: Boolean): Double {
 //        return if (isDeposit) currentBalance + amount else currentBalance - amount
@@ -116,4 +152,4 @@
 //    fun getTransactions(accountId: Long, limit: Int): List<TransactionEntity> {
 //        return transactionRepository.findTop10ByDestinationIdOrderByCreatedAtDesc(accountId)
 //    }
-//}
+}

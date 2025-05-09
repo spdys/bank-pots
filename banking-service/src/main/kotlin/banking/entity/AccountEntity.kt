@@ -16,7 +16,7 @@ data class AccountEntity(
     @Enumerated(EnumType.STRING)
     val accountType: AccountType,
 
-    val balance: BigDecimal = BigDecimal.ZERO,
+    var balance: BigDecimal = BigDecimal.ZERO,
     val currency: String = "KWD",
     val createdAt: LocalDateTime = LocalDateTime.now(),
     val isActive: Boolean = true,
