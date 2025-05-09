@@ -51,7 +51,7 @@ class TransactionService(
         accountRepository.save(destinationAccount)
 
 
-        // TODO: call auto-distribute here
+        autoDistributeToPots(destinationAccount)
 
         // Edit This TODO?
         return DepositSalaryResponse(
@@ -67,9 +67,11 @@ class TransactionService(
         // check if main
         val destinationOriginalBalance = destinationAccount.balance
         if (destinationAccount.accountType == AccountEntity.AccountType.MAIN) {
+            // fetch all pots
             val pots = potRepository.findAllByAccountId(destinationAccount.id)
             var potsTotalAllocationAmount = BigDecimal.ZERO
             // if no pots exist, it will skip for loop
+            // loop through pots to distribute based on fixed/percentage
             for (pot in pots) {
                 val allocationPerPot = when (pot.allocationType) {
                     PotEntity.AllocationType.FIXED -> pot.allocationValue
@@ -97,12 +99,7 @@ class TransactionService(
             // Main account updated balance
             destinationAccount.balance = destinationAccount.balance.minus(potsTotalAllocationAmount)
             accountRepository.save(destinationAccount)
-
         }
-
-        // fetch all pots
-        // loop through pots to distribute based on fixed/percentage
-        // update main
 
     }
 

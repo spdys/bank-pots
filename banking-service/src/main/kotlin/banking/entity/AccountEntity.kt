@@ -1,5 +1,6 @@
 package banking.entity
 
+import banking.BankingBadRequestException
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -24,5 +25,12 @@ data class AccountEntity(
     enum class AccountType {
         MAIN,
         SAVINGS
+    }
+    @PrePersist
+    @PreUpdate
+    fun validateBalance() {
+        if (balance < BigDecimal.ZERO) {
+            throw BankingBadRequestException("Account balance cannot be negative.")
+        }
     }
 }

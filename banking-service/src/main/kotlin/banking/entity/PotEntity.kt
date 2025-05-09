@@ -1,5 +1,6 @@
 package banking.entity
 
+import banking.BankingBadRequestException
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -25,4 +26,13 @@ data class PotEntity(
         FIXED,
         PERCENTAGE
     }
+
+    @PrePersist
+    @PreUpdate
+    fun validateBalance() {
+        if (balance < BigDecimal.ZERO) {
+            throw BankingBadRequestException("Pot balance cannot be negative.")
+        }
+    }
+
 }

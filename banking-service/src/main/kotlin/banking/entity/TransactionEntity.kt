@@ -1,5 +1,6 @@
 package banking.entity
 
+import banking.BankingBadRequestException
 import java.time.LocalDateTime
 import jakarta.persistence.*
 import java.math.BigDecimal
@@ -26,11 +27,20 @@ data class TransactionEntity(
 
     var cardId: Long? = null, // to reference card
 
-    )
+    ) {
 
 enum class TransactionType{
     DEPOSIT,
     WITHDRAW,
     TRANSFER,
     PURCHASE,
+}
+    @PrePersist
+    @PreUpdate
+    fun validateBalance() {
+        if (amount < BigDecimal.ZERO) {
+            throw BankingBadRequestException("Amount cannot be negative.")
+        }
+
+    }
 }
