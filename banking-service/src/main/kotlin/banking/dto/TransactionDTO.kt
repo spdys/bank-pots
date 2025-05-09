@@ -1,5 +1,6 @@
 package com.banking.bankingservice.dto
 
+import banking.entity.TransactionEntity
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -36,15 +37,22 @@ data class PotDepositResponse(
     val newAccountBalance: BigDecimal
 )
 
-
-data class TransactionDTO(
+data class TransactionHistoryRequest(
+    val cardId: Long? = null,
+    val accountId: Long? = null,
+    val potId: Long? = null,
+)
+data class TransactionHistoryResponse(
     val id: Long,
-    val amount: Double,
+    val amount: BigDecimal,
     val transactionType: String,
     val description: String?,
-    val sourceId: Long?,
-    val destinationId: Long,
-    val balanceBefore: Double,
-    val balanceAfter: Double,
     val createdAt: LocalDateTime
+)
+fun TransactionEntity.toHistoryResponse() = TransactionHistoryResponse(
+    id = this.id!!,
+    amount = this.amount,
+    transactionType = this.transactionType.name,
+    description = this.description,
+    createdAt = this.createdAt
 )
