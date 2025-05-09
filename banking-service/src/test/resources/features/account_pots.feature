@@ -10,3 +10,12 @@ Feature: User account and pot operations
     And I edit pot ID 1 in the stored account with name "Food", allocation type "PERCENTAGE", and value 0.2
     And I retrieve the summary for the stored account
     Then the response status code should be 200
+
+  Scenario: Successfully create a SAVINGS account
+    When I create a "SAVINGS" account
+    Then the response status code should be 201
+
+  Scenario: Fail to create a second MAIN account
+    When I create a "MAIN" account
+    And I create a "MAIN" account
+    Then the response status code should be 400
