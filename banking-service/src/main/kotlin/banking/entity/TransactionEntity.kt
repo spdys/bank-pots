@@ -24,6 +24,8 @@ data class TransactionEntity(
     var balanceAfter: BigDecimal,
     var createdAt: LocalDateTime = LocalDateTime.now(),
 
+    var cardId: Long? = null, // to reference card
+
     )
 
 enum class TransactionType{
