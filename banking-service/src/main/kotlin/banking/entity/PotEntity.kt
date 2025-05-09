@@ -13,7 +13,7 @@ data class PotEntity(
 
     val accountId: Long? = null,
     val name: String,
-    val balance: BigDecimal = BigDecimal.ZERO,
+    var balance: BigDecimal = BigDecimal.ZERO,
 
     @Enumerated(EnumType.STRING)
     val allocationType: AllocationType,

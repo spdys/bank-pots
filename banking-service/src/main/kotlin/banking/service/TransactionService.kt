@@ -1,12 +1,15 @@
 package banking.service
 
 import banking.BankingNotFoundException
+import banking.entity.AccountEntity
+import banking.entity.PotEntity
 import banking.entity.TransactionEntity
 import banking.entity.TransactionType
 import banking.repository.AccountRepository
 import banking.repository.PotRepository
 import banking.repository.TransactionRepository
 import com.banking.bankingservice.dto.DepositSalaryResponse
+import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -24,6 +27,7 @@ class TransactionService(
     TRANSFER,
     PURCHASE,
     */
+    @Transactional
     fun depositSalaryToAccount(destinationId: Long, amount: BigDecimal): DepositSalaryResponse {
 
         val destinationAccount = accountRepository.findById(destinationId)
@@ -33,8 +37,6 @@ class TransactionService(
         val balanceAfter = balanceBefore.plus(amount)
         val description = "SALARY"
 
-        destinationAccount.balance = balanceAfter
-        accountRepository.save(destinationAccount)
         val transaction = TransactionEntity(
             destinationId = destinationId,
             amount = amount,
@@ -44,11 +46,63 @@ class TransactionService(
             balanceAfter = balanceAfter,
         )
         transactionRepository.save(transaction)
+
+        destinationAccount.balance = balanceAfter
+        accountRepository.save(destinationAccount)
+
+
+        // TODO: call auto-distribute here
+
+        // Edit This TODO?
         return DepositSalaryResponse(
             destinationId = destinationId,
             balanceBefore = balanceBefore,
             balanceAfter = balanceAfter
         )
+
+
+    }
+
+    fun autoDistributeToPots(destinationAccount: AccountEntity) {
+        // check if main
+        val destinationOriginalBalance = destinationAccount.balance
+        if (destinationAccount.accountType == AccountEntity.AccountType.MAIN) {
+            val pots = potRepository.findAllByAccountId(destinationAccount.id)
+            var potsTotalAllocationAmount = BigDecimal.ZERO
+            // if no pots exist, it will skip for loop
+            for (pot in pots) {
+                val allocationPerPot = when (pot.allocationType) {
+                    PotEntity.AllocationType.FIXED -> pot.allocationValue
+                    PotEntity.AllocationType.PERCENTAGE -> pot.allocationValue
+                        .multiply(destinationAccount.balance)
+                }
+                if (allocationPerPot > BigDecimal.ZERO) {
+                    val potBalanceBefore = pot.balance
+                    val potBalanceAfter = potBalanceBefore.plus(allocationPerPot)
+                    pot.balance = potBalanceAfter
+                    potRepository.save(pot)
+                    transactionRepository.save(TransactionEntity(
+                        destinationId = destinationAccount.id,
+                        amount = allocationPerPot,
+                        description = "Auto transfer from SALARY to ${pot.name}",
+                        transactionType = TransactionType.TRANSFER,
+                        balanceBefore = potBalanceBefore,
+                        balanceAfter = pot.balance
+                    )
+
+                    )
+                    potsTotalAllocationAmount = potsTotalAllocationAmount.plus(allocationPerPot)
+                }
+            }
+            // Main account updated balance
+            destinationAccount.balance = destinationAccount.balance.minus(potsTotalAllocationAmount)
+            accountRepository.save(destinationAccount)
+
+        }
+
+        // fetch all pots
+        // loop through pots to distribute based on fixed/percentage
+        // update main
 
     }
 

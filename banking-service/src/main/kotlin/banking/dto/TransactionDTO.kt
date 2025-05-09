@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 data class DepositSalaryRequest(
     val destinationId: Long,
-    val amount: BigDecimal
+    val amount: BigDecimal,
 )
 
 data class DepositSalaryResponse(
