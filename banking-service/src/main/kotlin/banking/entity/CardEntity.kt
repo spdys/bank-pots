@@ -15,9 +15,16 @@ data class CardEntity(
     var potId: Long? = null,
     var cardNumber: String? = null,
     var token: String? = null,
-    var cardType: String,
+
+    @Enumerated(EnumType.STRING)
+    var cardType: CardType,
+
     var isActive: Boolean = true,
     val createdAt: LocalDateTime = LocalDateTime.now(),
     var expiresAt: LocalDateTime = LocalDateTime.now().plusYears(3)
-
 )
+
+enum class CardType {
+    PHYSICAL,
+    VIRTUAL
+}

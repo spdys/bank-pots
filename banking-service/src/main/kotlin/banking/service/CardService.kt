@@ -4,15 +4,24 @@ import banking.BankingBadRequestException
 import banking.entity.CardEntity
 import banking.repository.CardRepository
 import banking.BankingNotFoundException
+import banking.entity.CardType
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
+import javax.smartcardio.Card
 import kotlin.random.Random
 
 @Service
 class CardService(
     private val cardRepository: CardRepository
 ) {
+
+    fun autoGeneratePhysicalCard(accountId: Long): CardEntity {
+
+        var card = CardEntity(accountId = accountId,
+           cardNumber = generateCardNumber(), cardType = CardType.PHYSICAL)
+        return cardRepository.save(card)
+    }
 
     fun getCardById(id: Long): CardEntity {
         val card = cardRepository.findById(id).orElseThrow {

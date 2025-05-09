@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service
 @Service
 class AccountService(
     private val accountRepository: AccountRepository,
-    private val potRepository: PotRepository
+    private val potRepository: PotRepository,
+    private val cardService: CardService,
+
 ) {
     fun createAccount(request: CreateAccountRequest, principal: UserPrincipal): AccountResponse {
         // check if user already has a main account, throw exception if so
@@ -37,6 +39,9 @@ class AccountService(
         )
 
         val savedAccount = accountRepository.save(account)
+
+        // need to autogenerate physical card after account creation
+        cardService.autoGeneratePhysicalCard(savedAccount.id)
 
         return AccountResponse(
             savedAccount.id,
