@@ -1,5 +1,6 @@
 package banking.service
 
+import banking.BankingBadRequestException
 import banking.BankingNotFoundException
 import banking.entity.AccountEntity
 import banking.entity.PotEntity
@@ -9,6 +10,7 @@ import banking.repository.PotRepository
 import banking.repository.TransactionRepository
 import com.banking.bankingservice.dto.DepositSalaryResponse
 import jakarta.transaction.Transactional
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -19,6 +21,8 @@ class TransactionService(
     private val potRepository: PotRepository,
     private val accountRepository: AccountRepository
 ) {
+    private val logger = LoggerFactory.getLogger(TransactionService::class.java)
+
     /*
     DEPOSIT,
     WITHDRAW,
@@ -49,7 +53,11 @@ class TransactionService(
         accountRepository.save(destinationAccount)
 
 
-        autoDistributeToPots(destinationAccount)
+        try {
+            autoDistributeToPots(destinationAccount)
+        } catch (ex: Exception) {
+            logger.error("Auto-distribution failed for account ${destinationAccount.id}: ${ex.message}")
+        }
 
         // Edit This TODO?
         return DepositSalaryResponse(
@@ -67,6 +75,8 @@ class TransactionService(
         if (destinationAccount.accountType == AccountEntity.AccountType.MAIN) {
             // fetch all pots
             val pots = potRepository.findAllByAccountId(destinationAccount.id)
+            // to make sure pots do not exceed main acc balance
+            validateTotalPotAllocations(pots, destinationAccount.balance)
             var potsTotalAllocationAmount = BigDecimal.ZERO
             // if no pots exist, it will skip for loop
             // loop through pots to distribute based on fixed/percentage
@@ -81,14 +91,15 @@ class TransactionService(
                     val potBalanceAfter = potBalanceBefore.plus(allocationPerPot)
                     pot.balance = potBalanceAfter
                     potRepository.save(pot)
-                    transactionRepository.save(TransactionEntity(
-                        destinationId = destinationAccount.id,
-                        amount = allocationPerPot,
-                        description = "Auto transfer from SALARY to ${pot.name}",
-                        transactionType = TransactionEntity.TransactionType.TRANSFER,
-                        balanceBefore = potBalanceBefore,
-                        balanceAfter = pot.balance
-                    )
+                    transactionRepository.save(
+                        TransactionEntity(
+                            destinationId = destinationAccount.id,
+                            amount = allocationPerPot,
+                            description = "Auto transfer from SALARY to ${pot.name}",
+                            transactionType = TransactionEntity.TransactionType.TRANSFER,
+                            balanceBefore = potBalanceBefore,
+                            balanceAfter = pot.balance
+                        )
 
                     )
                     potsTotalAllocationAmount = potsTotalAllocationAmount.plus(allocationPerPot)
@@ -99,6 +110,22 @@ class TransactionService(
             accountRepository.save(destinationAccount)
         }
 
+    }
+
+    fun validateTotalPotAllocations(pots: List<PotEntity>, accountBalance: BigDecimal) {
+        var total = BigDecimal.ZERO
+        for (pot in pots) {
+            val allocation = when (pot.allocationType) {
+                PotEntity.AllocationType.FIXED -> pot.allocationValue
+                PotEntity.AllocationType.PERCENTAGE ->
+                    pot.allocationValue.multiply(accountBalance)
+            }
+            total = total.plus(allocation)
+        }
+
+        if (total > accountBalance) {
+            throw BankingBadRequestException("Total pot allocations ($total) exceed account balance ($accountBalance).")
+        }
     }
 
 
