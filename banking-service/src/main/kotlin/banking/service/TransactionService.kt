@@ -2,10 +2,14 @@ package banking.service
 
 import banking.BankingBadRequestException
 import banking.BankingNotFoundException
+import banking.dto.CardPaymentResponse
 import banking.entity.AccountEntity
+import banking.entity.CardEntity
+import banking.entity.CardType
 import banking.entity.PotEntity
 import banking.entity.TransactionEntity
 import banking.repository.AccountRepository
+import banking.repository.CardRepository
 import banking.repository.PotRepository
 import banking.repository.TransactionRepository
 import banking.security.UserPrincipal
@@ -16,15 +20,21 @@ import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 @Service
 class TransactionService(
     private val transactionRepository: TransactionRepository,
     private val cardService: CardService,
     private val potRepository: PotRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val cardRepository: CardRepository,
 ) {
     private val logger = LoggerFactory.getLogger(TransactionService::class.java)
+
+    // usage of @Transactional here is critical here because if the function fails at some point,
+    // all database changes (pot balance, account balance, and transaction record)
+    // will be rolled back automatically.
 
     @Transactional
     fun depositSalaryToAccount(destinationId: Long, amount: BigDecimal): DepositSalaryResponse {
@@ -125,17 +135,8 @@ class TransactionService(
         }
     }
 
-    /*
-DEPOSIT,
-WITHDRAW,
-TRANSFER,
-PURCHASE,
-*/
 
-    // usage of transactional here is critical here because if the function fails at some point,
-    // all database changes (pot balance, account balance, and transaction record)
-    // will be rolled back automatically.
-        @Transactional
+    @Transactional
     fun withdrawFromPotToMainOrSavings(
         sourcePotId: Long,
         amount: BigDecimal,
@@ -266,104 +267,100 @@ PURCHASE,
 
     }
 
+    // Make purchases using physical card or tokenized pot card
+    @Transactional
+    fun cardPurchase(
+        cardNumberOrToken: String,
+        amount: BigDecimal,
+        principal: UserPrincipal
+    ): CardPaymentResponse {
 
-//
-//    private fun calculateBalance(currentBalance: Double, amount: Double, isDeposit: Boolean): Double {
-//        return if (isDeposit) currentBalance + amount else currentBalance - amount
-//    }
-//
-//    fun deposit(accountId: Long, amount: Double, isSalary: Boolean = false, description: String? = null): TransactionEntity {
-//        val now = LocalDateTime.now()
-//
-//        //  if the account exists, retrieve its type
-//        val account = accountRepository.findById(accountId).orElseThrow {
-//            BankingNotFoundException("Account with ID $accountId not found")
-//        }
-//
-//        //  if it is a salary deposit enforce deposit to  main
-//        if (isSalary && account.accountType != AccountEntity.AccountType.MAIN) {
-//            throw BankingBadRequestException("Salary can only be deposited into the main account")
-//        }
-//
-//        val currentBalance = 1000.0  // to be replaced
-//        val updatedBalance = calculateBalance(currentBalance, amount, true)
-//
-//        val transaction = TransactionEntity(
-//            cardId = accountId,
-//            sourceId = null,
-//            destinationId = accountId,
-//            amount = amount,
-//            transactionType = if (isSalary) "SALARY_DEPOSIT" else "DEPOSIT",
-//            description = description ?: "No description",
-//            balance = updatedBalance,
-//            createdAt = now
-//        )
-//        return transactionRepository.save(transaction)
-//    }
-//
-//    fun transfer(cardNumber: Long, amount: Double, destinationId: Long, description: String? = null, date: LocalDateTime? = null): TransactionEntity {
-//        val now = date ?: LocalDateTime.now()
-//
-//        val card = cardService.getCardById(cardNumber) // get card info
-//
-//        //  card is associated with an account or a pot?
-//        val isAccount = card.cardType == "PHYSICAL"
-//        val isPot = card.cardType == "VIRTUAL"
-//
-//        if (isAccount) {
-//            if (card.cardNumber == null) {
-//                throw BankingBadRequestException("Invalid transfer: Expected account card number")
-//            }
-//        } else if (isPot) {
-//            if (card.token == null) {
-//                throw BankingBadRequestException("Invalid transfer: Expected pot token")
-//            }
-//        } else {
-//            throw BankingBadRequestException("Unknown card type: ${card.cardType}")
-//        }
-//
-//        val currentBalance = 1000.0 // to be replace
-//        val updatedBalance = calculateBalance(currentBalance, amount, false)
-//
-//        if (updatedBalance < 0) throw BankingBadRequestException("Insufficient funds")
-//
-//        val transaction = TransactionEntity(
-//            cardId = cardNumber,
-//            sourceId = cardNumber,
-//            destinationId = destinationId,
-//            amount = amount,
-//            transactionType = "TRANSFER",
-//            description = description ?: "No description",
-//            balance = updatedBalance,
-//            createdAt = now
-//        )
-//        return transactionRepository.save(transaction)
-//    }
-//
-//    fun withdraw(cardId: Long, amount: Double, description: String? = null, date: LocalDateTime? = null): TransactionEntity {
-//        val now = date ?: LocalDateTime.now()
-//        val card = cardService.getCardById(cardId) // get card info
-//
-//        val currentBalance = 1000.0 //to be replaced
-//        val updatedBalance = calculateBalance(currentBalance, amount, false)
-//
-//        if (updatedBalance < 0) {
-//            throw BankingBadRequestException("Insufficient funds for withdrawal")
-//        }
-//
-//        val transaction = TransactionEntity(
-//            cardId = cardId,
-//            sourceId = cardId,
-//            destinationId = null, // withdrawals have no destination
-//            amount = amount,
-//            transactionType = "WITHDRAWAL",
-//            description = description ?: "No description",
-//            balance = updatedBalance,
-//            createdAt = now
-//        )
-//        return transactionRepository.save(transaction)
-//    }
-//    fun getTransactions(accountId: Long, limit: Int): List<TransactionEntity> {
-//        return transactionRepository.findTop10ByDestinationIdOrderByCreatedAtDesc(accountId)
-//    }
+        val card = cardRepository.findByCardNumber(cardNumberOrToken)
+            ?: cardRepository.findByToken(cardNumberOrToken)
+            ?: throw BankingNotFoundException("Card not found.")
+
+        if (!isCardValid(card)) {
+            throw BankingBadRequestException("Card is not valid.")
+        }
+
+        val isPot = card.accountId == null
+        val sourceId: Long
+        val sourceBalance: BigDecimal
+        val newBalance: BigDecimal
+
+        if (isPot) {
+            val pot = potRepository.findById(card.potId!!).orElseThrow {
+                BankingNotFoundException("Pot not found for card.")
+            }
+            val parentAccount = accountRepository.findById(pot.accountId!!).orElseThrow {
+                BankingNotFoundException("Account not found for pot.")
+            }
+            if (parentAccount.userId != principal.getId()) {
+                throw BankingNotFoundException("User ID mismatch.")
+            }
+
+            sourceBalance = pot.balance
+
+            if (amount > sourceBalance) {
+                throw BankingBadRequestException("Purchase amount exceeds pot balance.")
+            }
+
+            newBalance = sourceBalance - amount
+            pot.balance = newBalance
+            potRepository.save(pot)
+            sourceId = pot.id!!
+        } else {
+            val account = accountRepository.findById(card.accountId!!).orElseThrow {
+                BankingNotFoundException("Account not found for card.")
+            }
+            if (account.userId != principal.getId()) {
+                throw BankingNotFoundException("User ID mismatch.")
+            }
+
+            sourceBalance = account.balance
+
+            if (amount > sourceBalance) {
+                throw BankingBadRequestException("Purchase amount exceeds account balance.")
+            }
+
+            newBalance = sourceBalance - amount
+            account.balance = newBalance
+            accountRepository.save(account)
+            sourceId = account.id!!
+        }
+
+        val transaction = TransactionEntity(
+            sourceId = sourceId,
+            cardId = card.id,
+            amount = amount,
+            description = "POS",
+            transactionType = TransactionEntity.TransactionType.PURCHASE,
+            balanceBefore = sourceBalance,
+            balanceAfter = newBalance,
+        )
+        transactionRepository.save(transaction)
+
+        return CardPaymentResponse(newBalance = newBalance)
+    }
+
+
+    fun isCardValid(card: CardEntity) : Boolean {
+        if (!card.isActive)
+            return false
+        if (card.expiresAt.isBefore(LocalDateTime.now())) {
+            card.isActive = false
+            // Safe assertions here
+            // as cards creation requires either pot/acc id
+            if (card.cardType == CardType.PHYSICAL){
+                cardService.autoGeneratePhysicalCard(card.accountId!!)
+            }
+            if (card.cardType == CardType.TOKENIZED){
+                cardService.autoGenerateTokenizedCard(card.potId!!)
+            }
+            return false
+        }
+        return true
+    }
+
+
 }

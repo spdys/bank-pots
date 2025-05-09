@@ -20,7 +20,7 @@ data class CardEntity(
     var cardType: CardType,
 
     var isActive: Boolean = true,
-    val createdAt: LocalDateTime = LocalDateTime.now(),
+    var createdAt: LocalDateTime = LocalDateTime.now(),
     var expiresAt: LocalDateTime = LocalDateTime.now().plusYears(3)
 )
 

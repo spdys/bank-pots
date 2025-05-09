@@ -6,4 +6,8 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface CardRepository : JpaRepository<CardEntity, Long>{
+
+    fun findByCardNumber(cardNumberOrToken: String): CardEntity?
+    fun findByToken(token: String): CardEntity?
+
 }
