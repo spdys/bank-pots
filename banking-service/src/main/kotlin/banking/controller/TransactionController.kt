@@ -1,13 +1,10 @@
 package banking.controller
 
+import banking.dto.CardPaymentRequest
+import banking.dto.CardPaymentResponse
 import banking.security.UserPrincipal
 import banking.service.TransactionService
-import com.banking.bankingservice.dto.DepositSalaryRequest
-import com.banking.bankingservice.dto.DepositSalaryResponse
-import com.banking.bankingservice.dto.PotDepositRequest
-import com.banking.bankingservice.dto.PotDepositResponse
-import com.banking.bankingservice.dto.PotWithdrawalRequest
-import com.banking.bankingservice.dto.PotWithdrawalResponse
+import com.banking.bankingservice.dto.*
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -52,15 +49,33 @@ class TransactionController(
     fun depositToPot(
         @AuthenticationPrincipal principal: UserPrincipal,
         @RequestBody request: PotDepositRequest
-    ) : ResponseEntity<PotDepositResponse>{
+    ): ResponseEntity<PotDepositResponse> {
 
-        return ResponseEntity.ok().body(transactionService.manualDepositFromMainOrSavingsToPot(
-            sourceAccountId = request.sourceAccountId,
-            destinationPotId = request.destinationPotId,
-            amount = request.amount,
-            principal = principal
-        ))
+        return ResponseEntity.ok().body(
+            transactionService.manualDepositFromMainOrSavingsToPot(
+                sourceAccountId = request.sourceAccountId,
+                destinationPotId = request.destinationPotId,
+                amount = request.amount,
+                principal = principal
+            )
+        )
 
+    }
+
+    @PostMapping("v1/purchase")
+    fun purchaseFromCard(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @RequestBody request: CardPaymentRequest
+    ): ResponseEntity<CardPaymentResponse> {
+        return ResponseEntity.ok()
+            .body(
+                transactionService
+                    .cardPurchase(
+                        request.cardNumberOrToken,
+                        request.amount,
+                        request.destinationId,
+                        principal)
+            )
     }
 
 

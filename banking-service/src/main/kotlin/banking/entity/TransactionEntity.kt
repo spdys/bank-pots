@@ -14,7 +14,7 @@ data class TransactionEntity(
     val id: Long? = null,
 
     var sourceId: Long? = null,
-    var destinationId: Long? = null,
+    var destinationId: Long,
 
     var amount: BigDecimal = BigDecimal.ZERO,
 

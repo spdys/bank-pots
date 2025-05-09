@@ -270,8 +270,10 @@ class TransactionService(
     // Make purchases using physical card or tokenized pot card
     @Transactional
     fun cardPurchase(
+        // TODO make description input???
         cardNumberOrToken: String,
         amount: BigDecimal,
+        destinationId: Long,
         principal: UserPrincipal
     ): CardPaymentResponse {
 
@@ -337,6 +339,7 @@ class TransactionService(
             transactionType = TransactionEntity.TransactionType.PURCHASE,
             balanceBefore = sourceBalance,
             balanceAfter = newBalance,
+            destinationId = destinationId,
         )
         transactionRepository.save(transaction)
 
