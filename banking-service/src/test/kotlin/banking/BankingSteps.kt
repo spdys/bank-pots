@@ -1,6 +1,7 @@
 package banking
 
 import io.cucumber.java.After
+import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
@@ -31,9 +32,9 @@ class BankingSteps {
     @Autowired
     lateinit var transactionTemplate: TransactionTemplate
 
-
     private var jwtToken: String = ""
     private var response: ResponseEntity<String>? = null
+    private var storedAccountId: Long = 0
 
     @Given("I have a valid JWT token for a user")
     fun iHaveValidJWTTokenForUser() {
@@ -84,7 +85,7 @@ class BankingSteps {
     @After
     fun cleanAccountsTestData() {
         transactionTemplate.execute {
-            val testUserId = 3L // test user's id
+            val testUserId: Long = 3 // test user's id
             entityManager.createNativeQuery("DELETE FROM pots WHERE account_id IN (SELECT id FROM accounts WHERE user_id = $testUserId)")
                 .executeUpdate()
             entityManager.createNativeQuery("DELETE FROM accounts WHERE user_id = $testUserId").executeUpdate()
@@ -149,5 +150,102 @@ class BankingSteps {
         )
     }
 
+    @And("I store the returned account ID")
+    fun iStoreTheReturnedAccountId() {
+        val body = response?.body ?: throw IllegalStateException("No response body found.")
+        val idRegex = Regex("\"id\":\\s*(\\d+)")
+        val match = idRegex.find(body) ?: throw IllegalStateException("Account ID not found in response.")
+        storedAccountId = match.groupValues[1].toLong()
+    }
 
+    @And("I create a pot in the stored account with name {string}, allocation type {string}, and value {double}")
+    fun iCreatePotInStoredAccount(name: String, allocationType: String, value: Double) {
+        val payload = """
+    {
+        "name": "$name",
+        "allocationType": "$allocationType",
+        "allocationValue": $value
+    }
+    """.trimIndent()
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/accounts/v1/$storedAccountId/pots",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @And("I edit pot ID {long} in the stored account with name {string}, allocation type {string}, and value {double}")
+    fun iEditPotInStoredAccount(potId: Long, name: String, allocationType: String, value: Double) {
+        val payload = """
+    {
+        "name": "$name",
+        "allocationType": "$allocationType",
+        "allocationValue": $value
+    }
+    """.trimIndent()
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/accounts/v1/$storedAccountId/pots/$potId",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @And("I retrieve the summary for the stored account")
+    fun iRetrieveSummaryForStoredAccount() {
+        val headers = HttpHeaders()
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(null, headers)
+
+        response = testRestTemplate.exchange(
+            "/accounts/v1/$storedAccountId/summary",
+            HttpMethod.GET,
+            request,
+            String::class.java
+        )
+    }
+
+    @And("I create 6 pots in the stored account")
+    fun iCreateSixPotsInStoredAccount() {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val requestTemplate = { i: Int ->
+            val payload = """
+        {
+            "name": "Pot$i",
+            "allocationType": "FIXED",
+            "allocationValue": 10.0
+        }
+        """.trimIndent()
+
+            HttpEntity(payload, headers)
+        }
+
+        repeat(6) { i ->
+            response = testRestTemplate.exchange(
+                "/accounts/v1/$storedAccountId/pots",
+                HttpMethod.POST,
+                requestTemplate(i + 1),
+                String::class.java
+            )
+        }
+    }
 }
