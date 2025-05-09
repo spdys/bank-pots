@@ -8,7 +8,9 @@ import banking.entity.TransactionEntity
 import banking.repository.AccountRepository
 import banking.repository.PotRepository
 import banking.repository.TransactionRepository
+import banking.security.UserPrincipal
 import com.banking.bankingservice.dto.DepositSalaryResponse
+import com.banking.bankingservice.dto.PotWithdrawalResponse
 import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -23,12 +25,6 @@ class TransactionService(
 ) {
     private val logger = LoggerFactory.getLogger(TransactionService::class.java)
 
-    /*
-    DEPOSIT,
-    WITHDRAW,
-    TRANSFER,
-    PURCHASE,
-    */
     @Transactional
     fun depositSalaryToAccount(destinationId: Long, amount: BigDecimal): DepositSalaryResponse {
 
@@ -126,6 +122,87 @@ class TransactionService(
         if (total > accountBalance) {
             throw BankingBadRequestException("Total pot allocations ($total) exceed account balance ($accountBalance).")
         }
+    }
+
+    /*
+DEPOSIT,
+WITHDRAW,
+TRANSFER,
+PURCHASE,
+*/
+
+    // usage of transactional here is critical here because if the function fails at some point,
+    // all database changes (pot balance, account balance, and transaction record)
+    // will be rolled back automatically.
+        @Transactional
+    fun withdrawFromPotToMainOrSavings(
+        sourcePotId: Long,
+        amount: BigDecimal,
+        principal: UserPrincipal
+    ): PotWithdrawalResponse {
+
+        // check existence before retrieving entity > better performance
+        if (!potRepository.existsById(sourcePotId)){
+            throw BankingNotFoundException("No pot found for sourceId")
+        }
+
+        val pot = potRepository.findById(sourcePotId).get()
+
+        val parentAccountId = pot.accountId!!
+
+
+        if (!accountRepository.existsById(parentAccountId)){
+            throw BankingNotFoundException("Destination account not found with id $parentAccountId")
+        }
+
+
+
+
+
+        val potParentAccount = accountRepository.findById(parentAccountId)
+            .orElseThrow { BankingNotFoundException("Account not found with id $parentAccountId") }
+        val potParentAccountUserId = potParentAccount.userId
+
+        // check authorization claim
+        if (potParentAccountUserId != principal.getId()){
+            throw BankingNotFoundException("User ID mismatch.")
+        }
+        // validate amount
+        if (amount > pot.balance) {
+            throw BankingBadRequestException("Withdrawal amount exceeds pot balance.")
+        }
+        if (amount <= BigDecimal.ZERO) {
+            throw BankingBadRequestException("Withdrawal amount must be non-negative.")
+        }
+        val potBalanceBefore = pot.balance
+
+        // Update balances
+        pot.balance -= amount
+        potRepository.save(pot)
+
+
+        potParentAccount.balance += amount
+        accountRepository.save(potParentAccount)
+        val newAccountBalance = potParentAccount.balance
+
+        val transaction = TransactionEntity(
+            sourceId = pot.id,
+            destinationId = potParentAccount.id,
+            amount = amount,
+            balanceBefore = potBalanceBefore,
+            balanceAfter = pot.balance,
+            transactionType = TransactionEntity.TransactionType.WITHDRAW,
+        )
+
+        transactionRepository.save(transaction)
+        return PotWithdrawalResponse(
+            newPotBalance = pot.balance,
+            newAccountBalance = newAccountBalance
+        )
+    }
+
+    fun withdrawFromMainOrSavingAccount(sourceId: Long, destinationId: Long, amount: BigDecimal) {
+        // destination could be main or pot
     }
 
 

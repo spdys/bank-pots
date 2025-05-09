@@ -15,6 +15,16 @@ data class DepositSalaryResponse(
     val balanceAfter: BigDecimal,
 )
 
+data class PotWithdrawalRequest(
+    val sourcePotId: Long,
+    val amount: BigDecimal
+)
+
+data class PotWithdrawalResponse(
+    val newPotBalance: BigDecimal,
+    val newAccountBalance: BigDecimal,
+)
+
 
 
 data class TransactionDTO(

@@ -4,6 +4,8 @@ import banking.security.UserPrincipal
 import banking.service.TransactionService
 import com.banking.bankingservice.dto.DepositSalaryRequest
 import com.banking.bankingservice.dto.DepositSalaryResponse
+import com.banking.bankingservice.dto.PotWithdrawalRequest
+import com.banking.bankingservice.dto.PotWithdrawalResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -28,6 +30,20 @@ class TransactionController(
             transactionService.depositSalaryToAccount(destinationId = request.destinationId, amount = request.amount)
 
         return ResponseEntity.ok(transaction)
+    }
+
+    @PostMapping("/v1/pot/withdrawal")
+    fun withdrawalToAccount(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @RequestBody request: PotWithdrawalRequest
+    ): ResponseEntity<PotWithdrawalResponse> {
+        return ResponseEntity.ok().body(
+            transactionService.withdrawFromPotToMainOrSavings(
+                request.sourcePotId,
+                request.amount,
+                principal
+            )
+        )
     }
 
 
