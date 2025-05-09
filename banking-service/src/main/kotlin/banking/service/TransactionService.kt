@@ -32,6 +32,7 @@ class TransactionService(
     private val accountRepository: AccountRepository,
     private val cardRepository: CardRepository,
 ) {
+
     private val logger = LoggerFactory.getLogger(TransactionService::class.java)
 
     // usage of @Transactional here is critical here because if the function fails at some point,
