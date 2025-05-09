@@ -1,11 +1,11 @@
 package banking
 
-import io.cucumber.datatable.DataTable
-import io.cucumber.java.Before
+import io.cucumber.java.After
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import io.cucumber.spring.CucumberContextConfiguration
+import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.transaction.support.TransactionTemplate
 
 
 @CucumberContextConfiguration
@@ -23,6 +24,13 @@ class BankingSteps {
 
     @Autowired
     lateinit var testRestTemplate: TestRestTemplate
+
+    @Autowired
+    lateinit var entityManager: EntityManager
+
+    @Autowired
+    lateinit var transactionTemplate: TransactionTemplate
+
 
     private var jwtToken: String = ""
     private var response: ResponseEntity<String>? = null
@@ -71,6 +79,16 @@ class BankingSteps {
         val tokenRegex = Regex("\"token\":\"(.*?)\"")
         val match = tokenRegex.find(loginResponse.body ?: "")
         jwtToken = match?.groupValues?.get(1) ?: throw IllegalStateException("Token not found")
+    }
+
+    @After
+    fun cleanAccountsTestData() {
+        transactionTemplate.execute {
+            val testUserId = 3L // test user's id
+            entityManager.createNativeQuery("DELETE FROM pots WHERE account_id IN (SELECT id FROM accounts WHERE user_id = $testUserId)")
+                .executeUpdate()
+            entityManager.createNativeQuery("DELETE FROM accounts WHERE user_id = $testUserId").executeUpdate()
+        }
     }
 
     @When("I submit the following KYC JSON:")
