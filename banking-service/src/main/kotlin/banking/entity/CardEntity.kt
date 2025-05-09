@@ -26,5 +26,5 @@ data class CardEntity(
 
 enum class CardType {
     PHYSICAL,
-    VIRTUAL
+    TOKENIZED
 }

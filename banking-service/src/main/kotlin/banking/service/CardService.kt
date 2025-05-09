@@ -1,25 +1,26 @@
 package banking.service
 
 import banking.BankingBadRequestException
-import banking.entity.CardEntity
-import banking.repository.CardRepository
 import banking.BankingNotFoundException
+import banking.entity.CardEntity
 import banking.entity.CardType
+import banking.repository.CardRepository
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
-import javax.smartcardio.Card
 import kotlin.random.Random
 
 @Service
 class CardService(
-    private val cardRepository: CardRepository
+    private val cardRepository: CardRepository,
 ) {
 
     fun autoGeneratePhysicalCard(accountId: Long): CardEntity {
 
-        var card = CardEntity(accountId = accountId,
-           cardNumber = generateCardNumber(), cardType = CardType.PHYSICAL)
+        val card = CardEntity(
+            accountId = accountId,
+            cardNumber = generateCardNumber(), cardType = CardType.PHYSICAL
+        )
         return cardRepository.save(card)
     }
 
@@ -39,6 +40,12 @@ class CardService(
         return cardRepository.save(card)
     }
 
+    // TODO: maybe need card number?
+    fun autoGenerateTokenizedCard(potId: Long): CardEntity {
+        val tokenCard = CardEntity(potId = potId, token = generateToken(potId), cardType = CardType.TOKENIZED)
+        return cardRepository.save(tokenCard)
+    }
+
     fun deleteCard(id: Long) {
         val existingCard = getCardById(id)
         cardRepository.delete(existingCard)
@@ -56,6 +63,13 @@ class CardService(
         val remainingDigits = (1..15).map { Random.nextInt(0, 10) }.joinToString("")
         return "$firstDigit$remainingDigits"
     }
+
+
+    fun generateToken(potId: Long): String {
+        val uuidPart = UUID.randomUUID().toString().replace("-", "").take(12)
+        return "P${potId}_$uuidPart"
+    }
+
 
     private fun generateToken(): String {
         return UUID.randomUUID().toString().replace("-", "").take(16)
