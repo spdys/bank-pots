@@ -6,21 +6,21 @@ import java.time.LocalDateTime
 @Entity
 @Table(name = "cards")
 data class CardEntity(
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
-    var cardNumber: String,
+    var id: Long? = null,
+    // Fks
+    var accountId: Long? = null,
+    var potId: Long? = null,
+    var cardNumber: String? = null,
     var token: String? = null,
-    val cardType: String,
+    var cardType: String,
     var isActive: Boolean = true,
     val createdAt: LocalDateTime = LocalDateTime.now(),
-    val expiresAt: LocalDateTime,
+    var expiresAt: LocalDateTime = LocalDateTime.now().plusYears(3)
 
-    @ManyToOne
-    @JoinColumn(name = "account_id")
-    val account: AccountEntity? = null,
 
-    @ManyToOne
-    @JoinColumn(name = "pot_id")
-    val pot: PotEntity? = null
+
+
 )

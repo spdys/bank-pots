@@ -2,21 +2,33 @@ package banking.entity
 
 import java.time.LocalDateTime
 import jakarta.persistence.*
+import java.math.BigDecimal
 
 @Entity
 @Table(name = "transactions")
 data class TransactionEntity(
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    val id: Long? = null,
 
-    val cardId: Long? = null,
-    val token: String? = null,
-    val sourceId: Long? = null, // optional, null for deposits
-    val destinationId: Long? = null,
-    val amount: Double,
-    val transactionType: String,
-    val description: String,
-    val balance: Double,
-    val createdAt: LocalDateTime = LocalDateTime.now()
-)
+    var sourceId: Long? = null,
+    var destinationId: Long,
+
+    var amount: BigDecimal = BigDecimal.ZERO,
+
+    @Enumerated(EnumType.STRING)
+    var transactionType: TransactionType,
+    var description: String? = null,
+    var balanceBefore: BigDecimal,
+    var balanceAfter: BigDecimal,
+    var createdAt: LocalDateTime = LocalDateTime.now(),
+
+    )
+
+enum class TransactionType{
+    DEPOSIT,
+    WITHDRAW,
+    TRANSFER,
+    PURCHASE,
+}
