@@ -59,38 +59,42 @@ class TransactionController(
         )
 
     }
-}
-//
-//    @PostMapping("v1/purchase") //withdraw from pot or main
-//    fun purchaseFromCard(
-//        @AuthenticationPrincipal principal: UserPrincipal,
-//        @RequestBody request: CardPaymentRequest
-//    ): ResponseEntity<CardPaymentResponse> {
-//        return ResponseEntity.ok()
-//            .body(
-//                transactionService
-//                    .cardPurchase(
-//                        request.cardNumberOrToken,
-//                        request.amount,
-//                        request.destinationId,
-//                        principal
-//                    )
-//            )
-//    }
-//}
-//
+
+
+    @PostMapping("v1/purchase") //withdraw from pot or main
+    fun purchaseFromCard(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @RequestBody request: CardPaymentRequest
+    ): ResponseEntity<CardPaymentResponse> {
+        return ResponseEntity.ok()
+            .body(
+                transactionService
+                    .cardPurchase(
+                        request.cardNumberOrToken,
+                        request.amount,
+                        request.destinationId,
+                        principal
+                    )
+            )
+    }
+
 //    @PostMapping("v1/history")
-//   fun retrieveTransactionHistory(
-//       @AuthenticationPrincipal principal: UserPrincipal,
-//       @RequestBody request: TransactionHistoryRequest
-//   ) : ResponseEntity<List<TransactionHistoryResponse>?> {
+//    fun retrieveTransactionHistory(
+//        @AuthenticationPrincipal principal: UserPrincipal,
+//        @RequestBody request: TransactionHistoryRequest
+//    ) : ResponseEntity<List<TransactionHistoryResponse>?> {
 //
-//       return ResponseEntity.ok().body(transactionService.transactionHistory(
+//        return ResponseEntity.ok().body(transactionService.transactionHistory(
 //            accountId = request.accountId,
 //            potId = request.potId,
 //            cardId = request.cardId,
-//           principal = principal
+//            principal = principal
 //        ))
 //    }
-//
-//}
+
+
+
+
+
+
+}

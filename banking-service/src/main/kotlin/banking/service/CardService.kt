@@ -13,7 +13,6 @@ import kotlin.random.Random
 @Service
 class CardService(
     private val cardRepository: CardRepository,
-    private val transactionService: TransactionService
 ) {
 
     fun autoGeneratePhysicalCard(accountId: Long): CardEntity {
@@ -29,7 +28,6 @@ class CardService(
         val card = cardRepository.findById(id).orElseThrow {
             BankingNotFoundException("Card with ID $id not found")
         }
-        transactionService.isCardValid(card)
         return card
     }
 
