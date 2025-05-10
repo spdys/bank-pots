@@ -140,7 +140,7 @@ class TransactionService(
 
 
     @Transactional
-    fun withdrawFromPotToMainOrSavings(
+    fun withdrawFromPotToMain(
         sourcePotId: Long,
         amount: BigDecimal,
         principal: UserPrincipal
