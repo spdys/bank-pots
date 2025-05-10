@@ -21,7 +21,7 @@ data class PotWithdrawalRequest(
     val amount: BigDecimal
 )
 
-data class PotWithdrawalResponse(
+data class PotTransferResponse(
     val newPotBalance: BigDecimal,
     val newAccountBalance: BigDecimal,
 )
