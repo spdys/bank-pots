@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component
 
 @Component class JwtService(
     @Value("\${JWT_SECRET_KEY}") secretKeyBase64: String) {
+
     private val secretKey: SecretKey = Keys.hmacShaKeyFor(
         Base64.getDecoder().decode(secretKeyBase64)
 
