@@ -10,7 +10,7 @@ class GlobalExceptionHandler {
 
     // Handling bad requests
     @ExceptionHandler(BankingBadRequestException::class)
-    fun handlePotsBadRequestException(ex: BankingBadRequestException): ResponseEntity<FailureResponse> {
+    fun handleBankingBadRequestException(ex: BankingBadRequestException): ResponseEntity<FailureResponse> {
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .body(FailureResponse(ex.message ?: "Bad request."))
@@ -18,9 +18,17 @@ class GlobalExceptionHandler {
 
     // Handling not founds
     @ExceptionHandler(BankingNotFoundException::class)
-    fun handlePotsNotFoundException(ex: BankingNotFoundException): ResponseEntity<FailureResponse> {
+    fun handleBankingNotFoundException(ex: BankingNotFoundException): ResponseEntity<FailureResponse> {
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
             .body(FailureResponse(ex.message ?: "Not found."))
+    }
+
+        // Handling forbiddens
+        @ExceptionHandler(BankingForbiddenException::class)
+        fun handleBankingForbiddenException(ex: BankingForbiddenException): ResponseEntity<FailureResponse> {
+            return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(FailureResponse(ex.message ?: "Forbidden."))
     }
 }

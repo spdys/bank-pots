@@ -1,6 +1,7 @@
 package banking.service
 
 import banking.BankingBadRequestException
+import banking.BankingForbiddenException
 import banking.BankingNotFoundException
 import banking.dto.CardPaymentResponse
 import banking.entity.AccountEntity
@@ -169,7 +170,7 @@ class TransactionService(
 
         // check authorization claim
         if (potParentAccountUserId != principal.getId()){
-            throw BankingNotFoundException("User ID mismatch.")
+            throw BankingForbiddenException("User ID mismatch.")
         }
         // validate amount
         if (amount > pot.balance) {
@@ -229,7 +230,7 @@ class TransactionService(
 
         // authorization
         if (sourceAccount.userId != principal.getId()) {
-            throw BankingNotFoundException("User ID mismatch.")
+            throw BankingForbiddenException("User ID mismatch.")
         }
 
         // validate pot belongs to the account
@@ -304,7 +305,7 @@ class TransactionService(
                 BankingNotFoundException("Account not found for pot.")
             }
             if (parentAccount.userId != principal.getId()) {
-                throw BankingNotFoundException("User ID mismatch.")
+                throw BankingForbiddenException("User ID mismatch.")
             }
 
             sourceBalance = pot.balance
@@ -322,7 +323,7 @@ class TransactionService(
                 BankingNotFoundException("Account not found for card.")
             }
             if (account.userId != principal.getId()) {
-                throw BankingNotFoundException("User ID mismatch.")
+                throw BankingForbiddenException("User ID mismatch.")
             }
 
             sourceBalance = account.balance
@@ -404,7 +405,7 @@ class TransactionService(
                 }
 
                 if (claimUserId != userId) {
-                    throw BankingBadRequestException("User ID mismatch.")
+                    throw BankingForbiddenException("User ID mismatch.")
                 }
 
                 transactionRepository.findAllByCardId(cardId)
@@ -418,7 +419,7 @@ class TransactionService(
                     .userId
 
                 if (claimUserId != userId) {
-                    throw BankingBadRequestException("User ID mismatch.")
+                    throw BankingForbiddenException("User ID mismatch.")
                 }
 
                 transactionRepository.findAllBySourceId(potId)
@@ -429,7 +430,7 @@ class TransactionService(
                     .orElseThrow { BankingNotFoundException("Account not found") }
 
                 if (account.userId != userId) {
-                    throw BankingBadRequestException("User ID mismatch.")
+                    throw BankingForbiddenException("User ID mismatch.")
                 }
 
                 transactionRepository.findAllBySourceId(accountId)
