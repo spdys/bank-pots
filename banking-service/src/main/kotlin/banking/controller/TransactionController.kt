@@ -1,7 +1,6 @@
 package banking.controller
 
-import banking.dto.DepositSalaryRequest
-import banking.dto.DepositSalaryResponse
+import banking.dto.*
 import banking.security.UserPrincipal
 import banking.service.TransactionService
 import org.springframework.http.ResponseEntity
@@ -29,39 +28,40 @@ class TransactionController(
 
         return ResponseEntity.ok(transaction)
     }
+
+    @PostMapping("/v1/pot/withdrawal") //renamed transfer in other functions
+    fun withdrawalToAccount(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @RequestBody request: PotTransferRequest
+    ): ResponseEntity<PotTransferResponse> {
+        return ResponseEntity.ok().body(
+            transactionService.transferFromPotToMain(
+                request.sourcePotId,
+                request.amount,
+                principal
+            )
+        )
+    }
+
+    @PostMapping("v1/pot/deposit")
+    fun depositToPot(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @RequestBody request: PotDepositRequest
+    ): ResponseEntity<PotDepositResponse> {
+
+        return ResponseEntity.ok().body(
+            transactionService.manualDepositFromMainOrSavingsToPot(
+                sourceAccountId = request.sourceAccountId,
+                destinationPotId = request.destinationPotId,
+                amount = request.amount,
+                principal = principal
+            )
+        )
+
+    }
+}
 //
-//    @PostMapping("/v1/pot/withdrawal")
-//    fun withdrawalToAccount(
-//        @AuthenticationPrincipal principal: UserPrincipal,
-//        @RequestBody request: PotWithdrawalRequest
-//    ): ResponseEntity<PotWithdrawalResponse> {
-//        return ResponseEntity.ok().body(
-//            transactionService.withdrawFromPotToMain(
-//                request.sourcePotId,
-//                request.amount,
-//                principal
-//            )
-//        )
-//    }
-//
-//    @PostMapping("v1/pot/deposit")
-//    fun depositToPot(
-//        @AuthenticationPrincipal principal: UserPrincipal,
-//        @RequestBody request: PotDepositRequest
-//    ): ResponseEntity<PotDepositResponse> {
-//
-//        return ResponseEntity.ok().body(
-//            transactionService.manualDepositFromMainOrSavingsToPot(
-//                sourceAccountId = request.sourceAccountId,
-//                destinationPotId = request.destinationPotId,
-//                amount = request.amount,
-//                principal = principal
-//            )
-//        )
-//
-//    }
-//
-//    @PostMapping("v1/purchase")
+//    @PostMapping("v1/purchase") //withdraw from pot or main
 //    fun purchaseFromCard(
 //        @AuthenticationPrincipal principal: UserPrincipal,
 //        @RequestBody request: CardPaymentRequest
@@ -73,22 +73,24 @@ class TransactionController(
 //                        request.cardNumberOrToken,
 //                        request.amount,
 //                        request.destinationId,
-//                        principal)
+//                        principal
+//                    )
 //            )
 //    }
+//}
 //
 //    @PostMapping("v1/history")
-//    fun retrieveTransactionHistory(
-//        @AuthenticationPrincipal principal: UserPrincipal,
-//        @RequestBody request: TransactionHistoryRequest
-//    ) : ResponseEntity<List<TransactionHistoryResponse>?> {
+//   fun retrieveTransactionHistory(
+//       @AuthenticationPrincipal principal: UserPrincipal,
+//       @RequestBody request: TransactionHistoryRequest
+//   ) : ResponseEntity<List<TransactionHistoryResponse>?> {
 //
-//        return ResponseEntity.ok().body(transactionService.transactionHistory(
+//       return ResponseEntity.ok().body(transactionService.transactionHistory(
 //            accountId = request.accountId,
 //            potId = request.potId,
 //            cardId = request.cardId,
-//            principal = principal
+//           principal = principal
 //        ))
 //    }
-
-}
+//
+//}

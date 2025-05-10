@@ -12,7 +12,7 @@ class CardController(
 ) {
 
     @GetMapping("/{id}")
-    fun getCardById(@PathVariable id: Long): ResponseEntity<CardEntity> {
+    fun retrieveCardById(@PathVariable id: Long): ResponseEntity<CardEntity> {
         val card = cardService.getCardById(id)
         return ResponseEntity.ok(card)
     }
