@@ -43,7 +43,8 @@ class BankingSteps () {
     @Autowired
     lateinit var jwt: JwtUtilForTesting
     private var userId: Long = 0
-    private var role: String = ""
+    private var targetUserId : Long = 0
+    private var adminUserId: Long = 0
 
     @Before
     fun cleanDatabaseExceptUsers() {
@@ -92,10 +93,12 @@ class BankingSteps () {
         val match = tokenRegex.find(loginResponse.body ?: "")
         jwtToken = match?.groupValues?.get(1) ?: throw IllegalStateException("Token not found")
     }
-    @Given("I extract the user ID from the token")
-    fun extractUserIdFromToken() {
-        userId = jwt.extractUserId(jwtToken)
+
+    @Then("I extract the user ID from the USER token")
+    fun extractUserIdFromUserToken() {
+        targetUserId = jwt.extractUserId(jwtToken)
     }
+
 
     @Given("I have a valid JWT token for an admin")
     fun iHaveValidJWTTokenForAdmin() {
@@ -118,6 +121,11 @@ class BankingSteps () {
         val tokenRegex = Regex("\"token\":\"(.*?)\"")
         val match = tokenRegex.find(loginResponse.body ?: "")
         jwtToken = match?.groupValues?.get(1) ?: throw IllegalStateException("Token not found")
+    }
+
+    @Then("I extract the user ID from the ADMIN token")
+    fun extractUserIdFromAdminToken() {
+        adminUserId = jwt.extractUserId(jwtToken)
     }
 
 //    @After
@@ -159,7 +167,7 @@ class BankingSteps () {
             HttpMethod.POST,
             request,
             String::class.java,
-            userId // target userId
+            targetUserId // target userId
         )
     }
 
