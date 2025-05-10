@@ -78,19 +78,19 @@ class TransactionController(
             )
     }
 
-//    @PostMapping("v1/history")
-//    fun retrieveTransactionHistory(
-//        @AuthenticationPrincipal principal: UserPrincipal,
-//        @RequestBody request: TransactionHistoryRequest
-//    ) : ResponseEntity<List<TransactionHistoryResponse>?> {
-//
-//        return ResponseEntity.ok().body(transactionService.transactionHistory(
-//            accountId = request.accountId,
-//            potId = request.potId,
-//            cardId = request.cardId,
-//            principal = principal
-//        ))
-//    }
+    @PostMapping("v1/history")
+    fun retrieveTransactionHistory(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @RequestBody request: TransactionHistoryRequest
+    ) : ResponseEntity<List<TransactionHistoryResponse>?> {
+
+        return ResponseEntity.ok().body(transactionService.transactionHistory(
+            accountId = request.accountId,
+            potId = request.potId,
+            cardId = request.cardId,
+            principal = principal
+        ))
+    }
 
 
 

@@ -393,74 +393,74 @@ class TransactionService(
     }
 //     transaction history per account/pot/card
 //     transaction history per account/pot/card
-//    fun transactionHistory(
-//        accountId: Long? = null,
-//        potId: Long? = null,
-//        cardId: Long? = null,
-//        principal: UserPrincipal
-//    ): List<TransactionHistoryResponse> {
-//
-//        // ensure only one non-null is passed
-//        val nonNullIds = listOf(cardId, potId, accountId).count { it != null }
-//        if (nonNullIds != 1) {
-//            throw BankingBadRequestException("You must provide exactly one of: cardId, potId, or accountId.")
-//        }
-//        val userId = principal.getId()
-//
-//        val transactions = when {
-//            cardId != null -> {
-//                val card = cardRepository.findById(cardId)
-//                    .orElseThrow { BankingNotFoundException("Card not found") }
-//
-//                val claimUserId = if (card.accountId != null) {
-//                    accountRepository.findById(card.accountId!!)
-//                        .orElseThrow { BankingNotFoundException("Account not found") }
-//                        .userId
-//                } else {
-//                    val pot = potRepository.findById(card.potId!!)
-//                        .orElseThrow { BankingNotFoundException("Pot not found") }
-//                    accountRepository.findById(pot.accountId!!)
-//                        .orElseThrow { BankingNotFoundException("Account not found for pot") }
-//                        .userId
-//                }
-//
-//                if (claimUserId != userId) {
-//                    throw BankingBadRequestException("User ID mismatch.")
-//                }
-//
-//                transactionRepository.findAllByCardId(cardId)
-//            }
-//
-//            potId != null -> {
-//                val pot = potRepository.findById(potId)
-//                    .orElseThrow { BankingNotFoundException("Pot not found") }
-//                val claimUserId = accountRepository.findById(pot.accountId!!)
-//                    .orElseThrow { BankingNotFoundException("Account not found for pot") }
-//                    .userId
-//
-//                if (claimUserId != userId) {
-//                    throw BankingBadRequestException("User ID mismatch.")
-//                }
-//
-//                transactionRepository.findAllBySourceId(potId)
-//            }
-//
-//            accountId != null -> {
-//                val account = accountRepository.findById(accountId)
-//                    .orElseThrow { BankingNotFoundException("Account not found") }
-//
-//                if (account.userId != userId) {
-//                    throw BankingBadRequestException("User ID mismatch.")
-//                }
-//
-//                transactionRepository.findAllBySourceId(accountId)
-//            }
-//
-//            else -> throw BankingBadRequestException("Must provide cardId, potId, or accountId.")
-//        }
-//
-//        return transactions.map { it.toHistoryResponse() }
-//    }
+    fun transactionHistory(
+        accountId: Long? = null,
+        potId: Long? = null,
+        cardId: Long? = null,
+        principal: UserPrincipal
+    ): List<TransactionHistoryResponse> {
+
+        // ensure only one non-null is passed
+        val nonNullIds = listOf(cardId, potId, accountId).count { it != null }
+        if (nonNullIds != 1) {
+            throw BankingBadRequestException("You must provide exactly one of: cardId, potId, or accountId.")
+        }
+        val userId = principal.getId()
+
+        val transactions = when {
+            cardId != null -> {
+                val card = cardRepository.findById(cardId)
+                    .orElseThrow { BankingNotFoundException("Card not found") }
+
+                val claimUserId = if (card.accountId != null) {
+                    accountRepository.findById(card.accountId!!)
+                        .orElseThrow { BankingNotFoundException("Account not found") }
+                        .userId
+                } else {
+                    val pot = potRepository.findById(card.potId!!)
+                        .orElseThrow { BankingNotFoundException("Pot not found") }
+                    accountRepository.findById(pot.accountId!!)
+                        .orElseThrow { BankingNotFoundException("Account not found for pot") }
+                        .userId
+                }
+
+                if (claimUserId != userId) {
+                    throw BankingBadRequestException("User ID mismatch.")
+                }
+
+                transactionRepository.findAllByCardId(cardId)
+            }
+
+            potId != null -> {
+                val pot = potRepository.findById(potId)
+                    .orElseThrow { BankingNotFoundException("Pot not found") }
+                val claimUserId = accountRepository.findById(pot.accountId!!)
+                    .orElseThrow { BankingNotFoundException("Account not found for pot") }
+                    .userId
+
+                if (claimUserId != userId) {
+                    throw BankingBadRequestException("User ID mismatch.")
+                }
+
+                transactionRepository.findAllBySourceId(potId)
+            }
+
+            accountId != null -> {
+                val account = accountRepository.findById(accountId)
+                    .orElseThrow { BankingNotFoundException("Account not found") }
+
+                if (account.userId != userId) {
+                    throw BankingBadRequestException("User ID mismatch.")
+                }
+
+                transactionRepository.findAllBySourceId(accountId)
+            }
+
+            else -> throw BankingBadRequestException("Must provide cardId, potId, or accountId.")
+        }
+
+        return transactions.map { it.toHistoryResponse() }
+    }
 
     fun isAccountValid(account: AccountEntity) : Boolean{
         return account.isActive
