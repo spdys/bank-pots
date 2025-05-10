@@ -9,6 +9,7 @@ import banking.dto.CloseAccountResponse
 import banking.dto.PotSummaryDto
 import banking.entity.AccountEntity
 import banking.repository.AccountRepository
+import banking.repository.CardRepository
 import banking.repository.PotRepository
 import banking.security.UserPrincipal
 import org.springframework.stereotype.Service
@@ -18,6 +19,7 @@ class AccountService(
     private val accountRepository: AccountRepository,
     private val potRepository: PotRepository,
     private val cardService: CardService,
+    private val cardRepository: CardRepository
 
 ) {
     fun createAccount(request: CreateAccountRequest, principal: UserPrincipal): AccountResponse {
@@ -61,6 +63,7 @@ class AccountService(
         if(account.userId != principal.getId()) {
             throw BankingNotFoundException("User ID mismatch.")
         }
+        val accountCard = cardRepository.findByAccountId(account.id)
 
         // if account is "MAIN"
         return if (account.accountType == AccountEntity.AccountType.MAIN) {
@@ -70,6 +73,7 @@ class AccountService(
                         pot.id,
                         pot.name,
                         pot.balance,
+                        cardRepository.findByPotId(pot.id).token!!,
                         pot.allocationType,
                         pot.allocationValue
                     )
@@ -80,6 +84,7 @@ class AccountService(
                 account.accountNumber,
                 account.accountType,
                 account.balance,
+                accountCard.cardNumber!!,
                 account.currency,
                 account.isActive,
                 pots,
@@ -90,6 +95,7 @@ class AccountService(
                 account.accountNumber,
                 account.accountType,
                 account.balance,
+                accountCard.cardNumber!!,
                 account.currency,
                 account.isActive,
             )

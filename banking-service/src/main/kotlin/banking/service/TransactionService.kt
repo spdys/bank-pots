@@ -105,6 +105,7 @@ class TransactionService(
                     potRepository.save(pot)
                     transactionRepository.save(
                         TransactionEntity(
+                            sourceId = pot.id,
                             destinationId = destinationAccount.id,
                             amount = allocationPerPot,
                             description = "Auto transfer from SALARY to ${pot.name}",
