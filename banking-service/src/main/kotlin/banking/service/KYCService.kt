@@ -75,7 +75,7 @@ class KYCService(private val kYCRepository: KYCRepository) {
 
     fun getKYC(userId: Long): ResponseEntity<Any> {
         if (!kYCRepository.existsByUserId(userId))
-            throw BankingNotFoundException("KYC entity not found,.")
+            throw BankingNotFoundException("KYC entity not found.")
         val kyc = kYCRepository.findByUserId(userId)!!
         return ResponseEntity.ok(
             KYCResponse(
