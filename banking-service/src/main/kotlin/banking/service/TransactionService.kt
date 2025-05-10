@@ -34,7 +34,6 @@ class TransactionService(
 ) {
 
     private val logger = LoggerFactory.getLogger(TransactionService::class.java)
-
     // usage of @Transactional here is critical here because if the function fails at some point,
     // all database changes (pot balance, account balance, and transaction record)
     // will be rolled back automatically.
@@ -45,6 +44,9 @@ class TransactionService(
         val destinationAccount = accountRepository.findById(destinationId)
             .orElseThrow { BankingNotFoundException("NO DESTINATION ACCOUNT FOUND") }
 
+        if (destinationAccount.accountType != AccountEntity.AccountType.MAIN){
+            throw BankingBadRequestException("NOT MAIN ACCOUNT")
+        }
         val balanceBefore = destinationAccount.balance
         val balanceAfter = balanceBefore.plus(amount)
         val description = "SALARY"

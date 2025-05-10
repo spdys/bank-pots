@@ -29,8 +29,8 @@ class KYCService(private val kYCRepository: KYCRepository) {
         KWCivilIDValidator.validate(kycRequest.civilId) // throws PotsNotFoundException | runtime
 
         val kyc =
-            if (kYCRepository.existsByUserId(principal.getUserId() ?: 0)) {
-                kYCRepository.findByUserId(principal.getUserId() ?: 0)?.copy(
+            if (kYCRepository.existsByUserId(principal.getUserId() ?: -1L)) {
+                kYCRepository.findByUserId(principal.getUserId() ?: -1L)?.copy(
                     fullName = kycRequest.fullName,
                     phone = kycRequest.phone,
                     email = kycRequest.email,
@@ -39,7 +39,7 @@ class KYCService(private val kYCRepository: KYCRepository) {
                     ?: throw BankingNotFoundException("Kyc entity not found.")
             } else
                 KYCEntity(
-                    userId = principal.getUserId() ?: 0,
+                    userId = principal.getUserId() ?: -1L,
                     fullName = kycRequest.fullName,
                     phone = kycRequest.phone,
                     email = kycRequest.email,
