@@ -44,7 +44,7 @@ class TransactionController(
         @RequestBody request: PotWithdrawalRequest
     ): ResponseEntity<PotWithdrawalResponse> {
         return ResponseEntity.ok().body(
-            transactionService.withdrawFromPotToMainOrSavings(
+            transactionService.withdrawFromPotToMain(
                 request.sourcePotId,
                 request.amount,
                 principal
