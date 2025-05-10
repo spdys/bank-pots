@@ -1,6 +1,7 @@
 package banking
 
 import io.cucumber.java.After
+import io.cucumber.java.Before
 import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
@@ -9,6 +10,7 @@ import io.cucumber.spring.CucumberContextConfiguration
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpEntity
@@ -19,9 +21,11 @@ import org.springframework.http.ResponseEntity
 import org.springframework.transaction.support.TransactionTemplate
 
 
+
 @CucumberContextConfiguration
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class BankingSteps {
+class BankingSteps () {
+
 
     @Autowired
     lateinit var testRestTemplate: TestRestTemplate
@@ -35,6 +39,36 @@ class BankingSteps {
     private var jwtToken: String = ""
     private var response: ResponseEntity<String>? = null
     private var storedAccountId: Long = 0
+
+    @Autowired
+    lateinit var jwt: JwtUtilForTesting
+    private var userId: Long = 0
+    private var role: String = ""
+
+    @Before
+    fun cleanDatabaseExceptUsers() {
+            transactionTemplate.execute {
+                entityManager.createNativeQuery("DELETE FROM transactions").executeUpdate()
+                entityManager.createNativeQuery("DELETE FROM cards").executeUpdate()
+                entityManager.createNativeQuery("DELETE FROM pots").executeUpdate()
+                entityManager.createNativeQuery("DELETE FROM accounts").executeUpdate()
+                entityManager.createNativeQuery("DELETE FROM kyc").executeUpdate()
+
+            }
+    }
+    @After
+    fun cleanAccountsTestData() {
+        if (userId != 0L) {
+            transactionTemplate.execute {
+                entityManager.createNativeQuery("DELETE FROM cards WHERE pot_id " +
+                        "IN (SELECT id FROM pots WHERE account_id IN (SELECT id FROM accounts WHERE user_id = $userId)) " +
+                        "OR account_id IN (SELECT id FROM accounts WHERE user_id = $userId)").executeUpdate()
+                entityManager.createNativeQuery("DELETE FROM pots WHERE account_id " +
+                        "IN (SELECT id FROM accounts WHERE user_id = $userId)").executeUpdate()
+                entityManager.createNativeQuery("DELETE FROM accounts WHERE user_id = $userId").executeUpdate()
+            }
+        }
+    }
 
     @Given("I have a valid JWT token for a user")
     fun iHaveValidJWTTokenForUser() {
@@ -57,6 +91,10 @@ class BankingSteps {
         val tokenRegex = Regex("\"token\":\"(.*?)\"")
         val match = tokenRegex.find(loginResponse.body ?: "")
         jwtToken = match?.groupValues?.get(1) ?: throw IllegalStateException("Token not found")
+    }
+    @Given("I extract the user ID from the token")
+    fun extractUserIdFromToken() {
+        userId = jwt.extractUserId(jwtToken)
     }
 
     @Given("I have a valid JWT token for an admin")
@@ -82,15 +120,17 @@ class BankingSteps {
         jwtToken = match?.groupValues?.get(1) ?: throw IllegalStateException("Token not found")
     }
 
-    @After
-    fun cleanAccountsTestData() {
-        transactionTemplate.execute {
-            val testUserId: Long = 3 // test user's id
-            entityManager.createNativeQuery("DELETE FROM pots WHERE account_id IN (SELECT id FROM accounts WHERE user_id = $testUserId)")
-                .executeUpdate()
-            entityManager.createNativeQuery("DELETE FROM accounts WHERE user_id = $testUserId").executeUpdate()
-        }
-    }
+//    @After
+//    fun cleanAccountsTestData() {
+//        transactionTemplate.execute {
+//            val testUserId: Long = 3 // test user's id
+//            entityManager.createNativeQuery("DELETE FROM pots WHERE account_id IN (SELECT id FROM accounts WHERE user_id = $testUserId)")
+//                .executeUpdate()
+//            entityManager.createNativeQuery("DELETE FROM accounts WHERE user_id = $testUserId").executeUpdate()
+//        }
+//    }
+    // used variable userId instead of fixed 3 and guarded it in case no userId was extracted
+
 
     @When("I submit the following KYC JSON:")
     fun iSubmitKYCDetailsWithJson(payload: String) {
@@ -115,10 +155,11 @@ class BankingSteps {
         val request = HttpEntity(null, headers)
 
         response = testRestTemplate.exchange(
-            "/api/v1/kyc/flag",
+            "/api/v1/kyc/flag/{targetUserId}",
             HttpMethod.POST,
             request,
-            String::class.java
+            String::class.java,
+            userId // target userId
         )
     }
 
@@ -154,6 +195,7 @@ class BankingSteps {
     fun iStoreTheReturnedAccountId() {
         val body = response?.body ?: throw IllegalStateException("No response body found.")
         val idRegex = Regex("\"id\":\\s*(\\d+)")
+        println("Response Body: $body")
         val match = idRegex.find(body) ?: throw IllegalStateException("Account ID not found in response.")
         storedAccountId = match.groupValues[1].toLong()
     }
