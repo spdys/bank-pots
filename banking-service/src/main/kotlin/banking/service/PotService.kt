@@ -15,7 +15,8 @@ import java.math.BigDecimal
 @Service
 class PotService(
     private val accountRepository: AccountRepository,
-    private val potRepository: PotRepository
+    private val potRepository: PotRepository,
+    private val cardService: CardService
 ) {
     fun createPot(accountId: Long, request: PotRequest, principal: UserPrincipal): PotResponse {
         // checking if account exists
@@ -60,6 +61,9 @@ class PotService(
         )
 
         val savedPot = potRepository.save(pot)
+
+        // auto generates token card which has pots id embedded in it
+        cardService.autoGenerateTokenizedCard(savedPot.id)
 
         return PotResponse(
             savedPot.id,

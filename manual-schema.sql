@@ -103,3 +103,7 @@ create table transactions
 alter table transactions
     owner to postgres;
 
+-- Added fk into transactions to reference card entity
+ALTER TABLE transactions
+    ADD COLUMN card_id BIGINT,
+ADD CONSTRAINT fk_transaction_card FOREIGN KEY (card_id) REFERENCES cards(id);

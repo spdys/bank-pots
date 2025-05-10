@@ -1,5 +1,6 @@
 package banking.entity
 
+import banking.BankingBadRequestException
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -13,7 +14,7 @@ data class PotEntity(
 
     val accountId: Long? = null,
     val name: String,
-    val balance: BigDecimal = BigDecimal.ZERO,
+    var balance: BigDecimal = BigDecimal.ZERO,
 
     @Enumerated(EnumType.STRING)
     val allocationType: AllocationType,
@@ -25,4 +26,13 @@ data class PotEntity(
         FIXED,
         PERCENTAGE
     }
+
+    @PrePersist
+    @PreUpdate
+    fun validateBalance() {
+        if (balance < BigDecimal.ZERO) {
+            throw BankingBadRequestException("Pot balance cannot be negative.")
+        }
+    }
+
 }
