@@ -1,5 +1,6 @@
 package banking
 
+import banking.dto.DepositSalaryResponse
 import io.cucumber.java.After
 import io.cucumber.java.Before
 import io.cucumber.java.en.And
@@ -10,7 +11,6 @@ import io.cucumber.spring.CucumberContextConfiguration
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpEntity
@@ -19,7 +19,11 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.support.TransactionTemplate
-
+import java.math.BigDecimal
+import kotlin.test.assertTrue
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.fasterxml.jackson.module.kotlin.readValue
 
 
 @CucumberContextConfiguration
@@ -327,6 +331,46 @@ class BankingSteps () {
             request,
             String::class.java
         )
+    }
+
+    @Given("I have a valid deposit salary request with amount {double}")
+    fun iHaveAValidDepositSalaryRequest(amount: Double) {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+        val payload = """
+        {
+            "destinationId": $storedAccountId,
+            "amount": $amount
+        }
+    """.trimIndent()
+
+        val requestEntity = HttpEntity(payload, headers)
+
+        // Send the request
+        response = testRestTemplate.exchange(
+            "/transactions/v1/salary",
+            HttpMethod.POST,
+            requestEntity,
+            String::class.java
+        )
+        println(response!!.body)
+    }
+
+    var depositSalaryResponse: DepositSalaryResponse? = null
+
+    @Then("the response body should contain the transaction details")
+    fun theResponseBodyShouldContainTransactionDetails() {
+        val body = response?.body ?: throw IllegalStateException("Response body is null")
+
+        val objectMapper = ObjectMapper().registerKotlinModule()
+        depositSalaryResponse = objectMapper.readValue(body, DepositSalaryResponse::class.java)
+
+        val parsedResponse = depositSalaryResponse ?: throw IllegalStateException("Response not deserialized")
+
+        assertTrue(parsedResponse.destinationId > 0, "Destination ID should be greater than 0")
+        assertTrue(parsedResponse.balanceBefore >= BigDecimal.ZERO, "Balance before should be >= 0")
+        assertTrue(parsedResponse.balanceAfter >= parsedResponse.balanceBefore, "Balance after should be >= balance before")
     }
 
 }
