@@ -84,65 +84,65 @@ class TransactionService(
 
 
     }
-//
-//    fun autoDistributeToPots(destinationAccount: AccountEntity) {
-//        // check if main
-//        val destinationOriginalBalance = destinationAccount.balance
-//        if (destinationAccount.accountType == AccountEntity.AccountType.MAIN) {
-//            // fetch all pots
-//            val pots = potRepository.findAllByAccountId(destinationAccount.id)
-//            // to make sure pots do not exceed main acc balance
-//            validateTotalPotAllocations(pots, destinationAccount.balance)
-//            var potsTotalAllocationAmount = BigDecimal.ZERO
-//            // if no pots exist, it will skip for loop
-//            // loop through pots to distribute based on fixed/percentage
-//            for (pot in pots) {
-//                val allocationPerPot = when (pot.allocationType) {
-//                    PotEntity.AllocationType.FIXED -> pot.allocationValue
-//                    PotEntity.AllocationType.PERCENTAGE -> pot.allocationValue
-//                        .multiply(destinationAccount.balance)
-//                }
-//                if (allocationPerPot > BigDecimal.ZERO) {
-//                    val potBalanceBefore = pot.balance
-//                    val potBalanceAfter = potBalanceBefore.plus(allocationPerPot)
-//                    pot.balance = potBalanceAfter
-//                    potRepository.save(pot)
-//                    transactionRepository.save(
-//                        TransactionEntity(
-//                            destinationId = destinationAccount.id,
-//                            amount = allocationPerPot,
-//                            description = "Auto transfer from SALARY to ${pot.name}",
-//                            transactionType = TransactionEntity.TransactionType.TRANSFER,
-//                            balanceBefore = potBalanceBefore,
-//                            balanceAfter = pot.balance
-//                        )
-//
-//                    )
-//                    potsTotalAllocationAmount = potsTotalAllocationAmount.plus(allocationPerPot)
-//                }
-//            }
-//            // Main account updated balance
-//            destinationAccount.balance = destinationAccount.balance.minus(potsTotalAllocationAmount)
-//            accountRepository.save(destinationAccount)
-//        }
-//
-//    }
-//
-//    fun validateTotalPotAllocations(pots: List<PotEntity>, accountBalance: BigDecimal) {
-//        var total = BigDecimal.ZERO
-//        for (pot in pots) {
-//            val allocation = when (pot.allocationType) {
-//                PotEntity.AllocationType.FIXED -> pot.allocationValue
-//                PotEntity.AllocationType.PERCENTAGE ->
-//                    pot.allocationValue.multiply(accountBalance)
-//            }
-//            total = total.plus(allocation)
-//        }
-//
-//        if (total > accountBalance) {
-//            throw BankingBadRequestException("Total pot allocations ($total) exceed account balance ($accountBalance).")
-//        }
-//    }
+
+    fun autoDistributeToPots(destinationAccount: AccountEntity) {
+        // check if main
+        val destinationOriginalBalance = destinationAccount.balance
+        if (destinationAccount.accountType == AccountEntity.AccountType.MAIN) {
+            // fetch all pots
+            val pots = potRepository.findAllByAccountId(destinationAccount.id)
+            // to make sure pots do not exceed main acc balance
+            validateTotalPotAllocations(pots, destinationAccount.balance)
+            var potsTotalAllocationAmount = BigDecimal.ZERO
+            // if no pots exist, it will skip for loop
+            // loop through pots to distribute based on fixed/percentage
+            for (pot in pots) {
+                val allocationPerPot = when (pot.allocationType) {
+                    PotEntity.AllocationType.FIXED -> pot.allocationValue
+                    PotEntity.AllocationType.PERCENTAGE -> pot.allocationValue
+                        .multiply(destinationAccount.balance)
+                }
+                if (allocationPerPot > BigDecimal.ZERO) {
+                    val potBalanceBefore = pot.balance
+                    val potBalanceAfter = potBalanceBefore.plus(allocationPerPot)
+                    pot.balance = potBalanceAfter
+                    potRepository.save(pot)
+                    transactionRepository.save(
+                        TransactionEntity(
+                            destinationId = destinationAccount.id,
+                            amount = allocationPerPot,
+                            description = "Auto transfer from SALARY to ${pot.name}",
+                            transactionType = TransactionEntity.TransactionType.TRANSFER,
+                            balanceBefore = potBalanceBefore,
+                            balanceAfter = pot.balance
+                        )
+
+                    )
+                    potsTotalAllocationAmount = potsTotalAllocationAmount.plus(allocationPerPot)
+                }
+            }
+            // Main account updated balance
+            destinationAccount.balance = destinationAccount.balance.minus(potsTotalAllocationAmount)
+            accountRepository.save(destinationAccount)
+        }
+
+    }
+
+    fun validateTotalPotAllocations(pots: List<PotEntity>, accountBalance: BigDecimal) {
+        var total = BigDecimal.ZERO
+        for (pot in pots) {
+            val allocation = when (pot.allocationType) {
+                PotEntity.AllocationType.FIXED -> pot.allocationValue
+                PotEntity.AllocationType.PERCENTAGE ->
+                    pot.allocationValue.multiply(accountBalance)
+            }
+            total = total.plus(allocation)
+        }
+
+        if (total > accountBalance) {
+            throw BankingBadRequestException("Total pot allocations ($total) exceed account balance ($accountBalance).")
+        }
+    }
 
 //
 //    @Transactional
