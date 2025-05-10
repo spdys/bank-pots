@@ -26,7 +26,7 @@ class TransactionController(
     private val transactionService: TransactionService
 ) {
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/v1/salary")
     fun depositSalaryToAccount(
         @AuthenticationPrincipal principal: UserPrincipal,
