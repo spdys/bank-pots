@@ -3,7 +3,7 @@ package banking
 import banking.dto.DepositSalaryResponse
 import banking.dto.PotDepositResponse
 import banking.dto.PotResponse
-import banking.dto.PotWithdrawalResponse
+import banking.dto.PotTransferResponse
 import io.cucumber.java.After
 import io.cucumber.java.Before
 import io.cucumber.java.en.And
@@ -405,7 +405,7 @@ class BankingSteps () {
     // pot withdrawal
 
     private var newPotBalance: BigDecimal = BigDecimal.ZERO
-    private var potWithdrawalResponse: PotWithdrawalResponse? = null
+    private var potWithdrawalResponse: PotTransferResponse? = null
 
 
     @When("I withdraw {double} from the pot to the main account")
@@ -459,7 +459,7 @@ class BankingSteps () {
         val body = response?.body ?: throw IllegalStateException("Response body is null")
 
         val objectMapper = ObjectMapper().registerKotlinModule()
-        potWithdrawalResponse = objectMapper.readValue(body, PotWithdrawalResponse::class.java)
+        potWithdrawalResponse = objectMapper.readValue(body, PotTransferResponse::class.java)
 
         val parsedResponse = potWithdrawalResponse ?: throw IllegalStateException("Response not deserialized")
 
