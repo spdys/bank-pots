@@ -2,21 +2,32 @@ package banking.controller
 
 import banking.entity.CardEntity
 import banking.service.CardService
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import banking.dto.FailureResponse
+import io.swagger.v3.oas.annotations.media.Schema
+
 @RestController
+@Tag(name = "Card API")
 @RequestMapping("/cards")
 class CardController(
     private val cardService: CardService
 ) {
 
+    @Operation(summary = "Get card by ID")
     @GetMapping("/{id}")
     fun getCardById(@PathVariable id: Long): ResponseEntity<CardEntity> {
         val card = cardService.getCardById(id)
         return ResponseEntity.ok(card)
     }
 
+    @Operation(summary = "Delete card by ID")
     @DeleteMapping("/{id}")
     fun deleteCard(@PathVariable id: Long): ResponseEntity<Void> {
         cardService.deleteCard(id)
