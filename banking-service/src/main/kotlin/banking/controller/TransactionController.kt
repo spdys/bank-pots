@@ -45,7 +45,7 @@ class TransactionController(
 
     @Operation(summary = "Withdraw from pot to main account")
     @ApiResponses(
-        ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = PotWithdrawalResponse::class))]),
+        ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = PotTransferResponse::class))]),
         ApiResponse(responseCode = "400", content = [Content(schema = Schema(implementation = FailureResponse::class))]),
         ApiResponse(responseCode = "404", content = [Content(schema = Schema(implementation = FailureResponse::class))])
     )
