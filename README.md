@@ -49,22 +49,23 @@ This is a multiservice backend system for managing users, bank accounts, and aut
 
 ### API Endpoints
 
-| Method | Path                                    | Description                       |
-|--------|-----------------------------------------|-----------------------------------|
-| POST   | `/api/v1/users/register`                | Register new user                 |
-| POST   | `/api/v1/users/auth/login`              | Authenticate and issue token      |
-| POST   | `/api/v1/kyc`                           | Submit KYC                        |
-| POST   | `/api/v1/kyc/flag/{targetUserId}`       | Flag KYC (admin)                  |
-| POST   | `/accounts/v1/create`                   | Create account (MAIN or SAVINGS)  |
-| POST   | `/accounts/v1/{accountId}/pots`         | Create pot                        |
-| POST   | `/accounts/v1/{accountId}/pots/{potId}` | Edit pot by ID                    |
-| GET    | `/accounts/v1/{accountId}/summary`      | Get account summary               |
-| POST   | `/admin/v1/accounts/{accountId}/close`  | Close account (admin)             |
-| POST   | `/transactions/v1/salary`               | Deposit salary (admin)            |
-| POST   | `/transactions/v1/pot/withdrawal`       | Withdraw to MAIN account          |
-| POST   | `/transactions/v1/pot/deposit`          | Deposit from account to pot       |
-| POST   | `/transactions/v1/purchase`             | Purchase using card               |
-| POST   | `/transactions/v1/history`              | View transaction history          |
+| Method | Path                                    | Description                      |
+|--------|-----------------------------------------|----------------------------------|
+| POST   | `/api/v1/users/register`                | Register new user                |
+| POST   | `/api/v1/users/auth/login`              | Authenticate and issue token     |
+| POST   | `/api/v1/kyc`                           | Submit KYC                       |
+| POST   | `/api/v1/kyc/flag/{targetUserId}`       | Flag KYC (admin)                 |
+| POST   | `/accounts/v1/create`                   | Create account (MAIN or SAVINGS) |
+| POST   | `/accounts/v1/{accountId}/pots`         | Create pot                       |
+| POST   | `/accounts/v1/{accountId}/pots/{potId}` | Edit pot by ID                   |
+| GET    | `/accounts/v1/{accountId}/summary`      | Get account summary              |
+| POST   | `/admin/v1/accounts/{accountId}/close`  | Close account (admin)            |
+| POST   | `/transactions/v1/salary`               | Deposit salary (admin)           |
+| POST   | `/transactions/v1/pot/withdrawal`       | Withdraw to MAIN account         |
+| POST   | `/transactions/v1/pot/deposit`          | Deposit from account to pot      |
+| POST   | `/transactions/v1/purchase`             | Purchase using card              |
+| POST   | `/transactions/v1/history`              | View transaction history         |
+| DELETE | `/cards/{id}`                           | Delete card (admin)              |
 
 ---
 
