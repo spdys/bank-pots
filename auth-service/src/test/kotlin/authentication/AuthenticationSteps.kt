@@ -94,6 +94,23 @@ class AuthenticationSteps {
         assertEquals(expectedStatusCode, response?.statusCode?.value())  // Compare actual and expected status code
     }
 
+    @When("I check the token from the response")
+    fun iCheckTheTokenFromTheResponse() {
+        val tokenRegex = """"token"\s*:\s*"([^"]+)"""".toRegex()
+        val match = tokenRegex.find(response?.body ?: "")
+        token = match?.groupValues?.get(1) ?: throw IllegalStateException("Token not found in response.")
+
+        val headers = HttpHeaders()
+        headers.set("Authorization", "Bearer $token")
+        val entity = HttpEntity<String>(headers)
+
+        response = testRestTemplate.exchange(
+            "/api/v1/users/auth/check-token",
+            HttpMethod.POST,
+            entity,
+            String::class.java
+        )
+    }
 
 
 }

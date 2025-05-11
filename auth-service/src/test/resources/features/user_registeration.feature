@@ -15,3 +15,7 @@ Feature: User Registration
     When I register the user
     Then the response status code should be 400
 
+  Scenario: Failing to register a user with invalid input: no uppercase letter
+    Given I have a user with username "ahjadi" and password "password123"
+    When I register the user
+    Then the response status code should be 400
