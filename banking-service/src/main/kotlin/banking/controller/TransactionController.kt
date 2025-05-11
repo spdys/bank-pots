@@ -1,15 +1,6 @@
 package banking.controller
 
-import banking.dto.CardPaymentRequest
-import banking.dto.CardPaymentResponse
-import banking.dto.DepositSalaryRequest
-import banking.dto.DepositSalaryResponse
-import banking.dto.PotDepositRequest
-import banking.dto.PotDepositResponse
-import banking.dto.PotWithdrawalRequest
-import banking.dto.PotWithdrawalResponse
-import banking.dto.TransactionHistoryRequest
-import banking.dto.TransactionHistoryResponse
+import banking.dto.*
 import banking.security.UserPrincipal
 import banking.service.TransactionService
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -20,8 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-
-
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -63,10 +52,10 @@ class TransactionController(
     @PostMapping("/v1/pot/withdrawal")
     fun withdrawalToAccount(
         @AuthenticationPrincipal principal: UserPrincipal,
-        @RequestBody request: PotWithdrawalRequest
-    ): ResponseEntity<PotWithdrawalResponse> {
+        @RequestBody request: PotTransferRequest
+    ): ResponseEntity<PotTransferResponse> {
         return ResponseEntity.ok().body(
-            transactionService.withdrawFromPotToMain(
+            transactionService.transferFromPotToMain(
                 request.sourcePotId,
                 request.amount,
                 principal
@@ -116,7 +105,8 @@ class TransactionController(
                         request.cardNumberOrToken,
                         request.amount,
                         request.destinationId,
-                        principal)
+                        principal
+                    )
             )
     }
 

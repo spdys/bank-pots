@@ -15,7 +15,7 @@ import banking.repository.TransactionRepository
 import banking.security.UserPrincipal
 import banking.dto.DepositSalaryResponse
 import banking.dto.PotDepositResponse
-import banking.dto.PotWithdrawalResponse
+import banking.dto.PotTransferResponse
 import banking.dto.TransactionHistoryResponse
 import banking.dto.toHistoryResponse
 import jakarta.transaction.Transactional
@@ -48,8 +48,8 @@ class TransactionService(
         val destinationAccount = accountRepository.findById(destinationId)
             .orElseThrow { BankingNotFoundException("NO DESTINATION ACCOUNT FOUND") }
 
-        if (!isAccountActive(destinationAccount)) {
-            throw BankingBadRequestException("Inactive destination account")
+        if (!isAccountValid(destinationAccount)){
+            throw BankingBadRequestException("Account is inactive!")
         }
 
         if (destinationAccount.accountType != AccountEntity.AccountType.MAIN){
@@ -151,11 +151,11 @@ class TransactionService(
 
 
     @Transactional
-    fun withdrawFromPotToMain(
+    fun transferFromPotToMain(
         sourcePotId: Long,
         amount: BigDecimal,
         principal: UserPrincipal
-    ): PotWithdrawalResponse {
+    ): PotTransferResponse {
 
         // check existence before retrieving entity > better performance
         if (!potRepository.existsById(sourcePotId)){
@@ -173,6 +173,11 @@ class TransactionService(
 
         val potParentAccount = accountRepository.findById(parentAccountId)
             .orElseThrow { BankingNotFoundException("Account not found with id $parentAccountId") }
+
+        if (!isAccountValid((potParentAccount)))
+                throw BankingBadRequestException("Card is not valid.")
+
+
         val potParentAccountUserId = potParentAccount.userId
 
         // check authorization claim
@@ -207,7 +212,7 @@ class TransactionService(
         )
 
         transactionRepository.save(transaction)
-        return PotWithdrawalResponse(
+        return PotTransferResponse(
             newPotBalance = pot.balance,
             newAccountBalance = newAccountBalance
         )
@@ -231,6 +236,9 @@ class TransactionService(
 
         val sourceAccount = accountRepository.findById(sourceAccountId)
             .orElseThrow { BankingNotFoundException("Account not found with id $sourceAccountId") }
+
+        if (!isAccountValid((sourceAccount)) )
+                throw BankingBadRequestException("Account is not valid.")
 
         val pot = potRepository.findById(destinationPotId)
             .orElseThrow { BankingNotFoundException("Pot not found with id $destinationPotId") }
@@ -359,25 +367,34 @@ class TransactionService(
 
         return CardPaymentResponse(newBalance = newBalance)
     }
+    fun isCardValid(card: CardEntity): Boolean {
+        if (!card.isActive) return false
 
-    fun isCardValid(card: CardEntity) : Boolean {
-        if (!card.isActive)
-            return false
+        // Check expiration date
         if (card.expiresAt.isBefore(LocalDateTime.now())) {
-            card.isActive = false // inactivate
-            // issue new
-            if (card.cardType == CardType.PHYSICAL){
-                cardService.autoGeneratePhysicalCard(card.accountId!!)
+            card.isActive = false
+
+            // Save the updated status to the repository
+            cardRepository.save(card)
+
+            // Safe assertion: card creation requires either pot or account ID
+            try {
+                if (card.cardType == CardType.PHYSICAL) {
+                    // Generate a new physical card linked to the account
+                    cardService.autoGeneratePhysicalCard(card.accountId!!)
+                } else if (card.cardType == CardType.TOKENIZED) {
+                    // Generate a new tokenized card linked to the pot
+                    cardService.autoGenerateTokenizedCard(card.potId!!)
+                }
+            } catch (ex: Exception) {
+                logger.error("Failed to auto-generate new card: ${ex.message}")
             }
-            if (card.cardType == CardType.TOKENIZED){
-                cardService.autoGenerateTokenizedCard(card.potId!!)
-            }
+
             return false
         }
         return true
     }
 
-    // transaction history per account/pot/card
     // transaction history per account/pot/card
     fun transactionHistory(
         accountId: Long? = null,
@@ -446,6 +463,10 @@ class TransactionService(
         }
 
         return transactions.map { it.toHistoryResponse() }
+    }
+
+    fun isAccountValid(account: AccountEntity) : Boolean{
+        return account.isActive
     }
 
 }
