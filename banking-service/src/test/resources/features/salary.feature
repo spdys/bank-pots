@@ -16,7 +16,7 @@ Feature: Deposit Salary to Account
     And I have a valid deposit salary request with amount -1000.00
     Then the response status code should be 400
 
-  Scenario: Fail to deposit salary due to insufficient permissions
+  Scenario: Fail to deposit salary due to no admin
     Given I have a valid JWT token for a user
     And I have a valid deposit salary request with amount 1000.00
     Then the response status code should be 403
