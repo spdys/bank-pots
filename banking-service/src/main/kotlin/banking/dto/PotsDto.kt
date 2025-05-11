@@ -7,6 +7,7 @@ data class PotSummaryDto(
     val potId: Long,
     val name: String,
     val balance: BigDecimal,
+    val cardToken: String,
     val allocationType: PotEntity.AllocationType,
     val allocationValue: BigDecimal
 )

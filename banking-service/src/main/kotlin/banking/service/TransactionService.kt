@@ -38,6 +38,10 @@ class TransactionService(
     // all database changes (pot balance, account balance, and transaction record)
     // will be rolled back automatically.
 
+    fun isAccountActive(accountEntity: AccountEntity): Boolean {
+        return accountEntity.isActive
+    }
+
     @Transactional
     fun depositSalaryToAccount(destinationId: Long, amount: BigDecimal): DepositSalaryResponse {
 
@@ -109,6 +113,7 @@ class TransactionService(
                     potRepository.save(pot)
                     transactionRepository.save(
                         TransactionEntity(
+                            sourceId = pot.id,
                             destinationId = destinationAccount.id,
                             amount = allocationPerPot,
                             description = "Auto transfer from SALARY to ${pot.name}",
@@ -219,8 +224,6 @@ class TransactionService(
         destinationPotId: Long,
         amount: BigDecimal,
         principal: UserPrincipal): PotDepositResponse {
-
-
 
         // check existence before retrieving entity > better performance
         if (!accountRepository.existsById(sourceAccountId)) {
@@ -391,8 +394,8 @@ class TransactionService(
         }
         return true
     }
-//     transaction history per account/pot/card
-//     transaction history per account/pot/card
+
+    // transaction history per account/pot/card
     fun transactionHistory(
         accountId: Long? = null,
         potId: Long? = null,
