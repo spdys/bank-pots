@@ -36,7 +36,9 @@ class SecurityConfig(
                     .requestMatchers(
 
                         "/api/v1/users/auth/login",
-                        "/api/v1/users/register"
+                        "/api/v1/users/register",
+                        "/api-docs"
+
                     ).permitAll()
 
                     // keep for later
