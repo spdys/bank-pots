@@ -1,4 +1,3 @@
-
 Feature: KYC Submission
 
   Scenario: Submit valid KYC JSON payload
@@ -63,4 +62,46 @@ Feature: KYC Submission
     Then the response status code should be 500
 
 
+  Scenario: Submit valid KYC JSON payload and retrieve it
+    Given I have a valid JWT token for a user
+    When I submit the following KYC JSON:
+  """
+  {
+    "fullName": "Ali Aljadi",
+    "phone": "94444398",
+    "email": "test@ali.com",
+    "civilId": "298030700133",
+    "dateOfBirth": "14-04-1998",
+    "address": "Kuwait"
+  }
+  """
+    Then the response status code should be 200
+    When I retrieve the current user's KYC details
+    Then the response status code should be 200
 
+  Scenario: Updating existing KYC
+    Given I have a valid JWT token for a user
+    When I submit the following KYC JSON:
+  """
+  {
+    "fullName": "Ali Aljadi",
+    "phone": "94444398",
+    "email": "test@ali.com",
+    "civilId": "298030700133",
+    "dateOfBirth": "14-04-1998",
+    "address": "Kuwait"
+  }
+  """
+    Then the response status code should be 200
+    When I submit the following KYC JSON:
+  """
+  {
+    "fullName": "Ali Aljadi",
+    "phone": "97777777",
+    "email": "updated@ali.com",
+    "civilId": "298030700133",
+    "dateOfBirth": "14-04-1998",
+    "address": "Kuwait"
+  }
+  """
+    Then the response status code should be 200

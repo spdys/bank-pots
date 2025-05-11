@@ -57,3 +57,26 @@ Feature: User account and pot operations
     And I store the returned account ID
     And I edit pot ID 999 in the stored account with name "Ghost", allocation type "FIXED", and value 10.0
     Then the response status code should be 404
+
+  Scenario: Fail to edit pot from the wrong account
+    When I create a "MAIN" account
+    And I store the returned account ID
+    And I create a pot in the stored account with name "Linked", allocation type "FIXED", and value 10.0
+    And I edit pot ID 1 in the stored account with name "BadAccess", allocation type "FIXED", and value 5.0
+    Then the response status code should be one of "403, 404"
+
+  Scenario: Fail to edit pot with duplicate name
+    When I create a "MAIN" account
+    And I store the returned account ID
+    And I create a pot in the stored account with name "A", allocation type "FIXED", and value 10.0
+    And I create a pot in the stored account with name "B", allocation type "FIXED", and value 10.0
+    And I edit the last created pot to have name "A", allocation type "FIXED", and value 10.0
+    Then the response status code should be 400
+
+  Scenario: Fail to edit pot with negative allocation
+    Given I have a valid JWT token for a user
+    When I create a "MAIN" account
+    And I store the returned account ID
+    And I create a pot in the stored account with name "Leaky", allocation type "FIXED", and value 10.0
+    And I edit the last created pot to have name "Leaky", allocation type "FIXED", and value -5.0
+    Then the response status code should be 400

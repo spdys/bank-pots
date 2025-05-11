@@ -4,7 +4,6 @@ import banking.dto.DepositSalaryResponse
 import banking.dto.PotDepositResponse
 import banking.dto.PotResponse
 import banking.dto.PotTransferResponse
-import io.cucumber.java.After
 import io.cucumber.java.Before
 import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
@@ -26,61 +25,45 @@ import java.math.BigDecimal
 import kotlin.test.assertTrue
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import java.util.Base64
 
-
-
 @CucumberContextConfiguration
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class BankingSteps () {
-
+class BankingSteps {
 
     @Autowired
     lateinit var testRestTemplate: TestRestTemplate
-
     @Autowired
     lateinit var entityManager: EntityManager
-
     @Autowired
     lateinit var transactionTemplate: TransactionTemplate
 
     private var jwtToken: String = ""
     private var response: ResponseEntity<String>? = null
     private var storedAccountId: Long = 0
-
-//    @Autowired
-//    lateinit var jwt: JwtUtilForTesting
     private var userId: Long = 0
-    private var targetUserId : Long = 0
-    private var adminUserId: Long = 0
+    private var targetUserId: Long = 0
+    private var potId: Long = 0
+    private var extractedCardNumber: String = ""
+    private var depositSalaryResponse: DepositSalaryResponse? = null
+    private var newPotBalance: BigDecimal = BigDecimal.ZERO
+    private var potWithdrawalResponse: PotTransferResponse? = null
+    private var potDepositResponse: PotDepositResponse? = null
 
     @Before
     fun cleanDatabaseExceptUsers() {
-            transactionTemplate.execute {
-                entityManager.createNativeQuery("DELETE FROM transactions").executeUpdate()
-                entityManager.createNativeQuery("DELETE FROM cards").executeUpdate()
-                entityManager.createNativeQuery("DELETE FROM pots").executeUpdate()
-                entityManager.createNativeQuery("DELETE FROM accounts").executeUpdate()
-                entityManager.createNativeQuery("DELETE FROM kyc").executeUpdate()
-
-            }
-    }
-    @After
-    fun cleanAccountsTestData() {
-        if (userId != 0L) {
-            transactionTemplate.execute {
-                entityManager.createNativeQuery("DELETE FROM cards WHERE pot_id " +
-                        "IN (SELECT id FROM pots WHERE account_id IN (SELECT id FROM accounts WHERE user_id = $userId)) " +
-                        "OR account_id IN (SELECT id FROM accounts WHERE user_id = $userId)").executeUpdate()
-                entityManager.createNativeQuery("DELETE FROM pots WHERE account_id " +
-                        "IN (SELECT id FROM accounts WHERE user_id = $userId)").executeUpdate()
-                entityManager.createNativeQuery("DELETE FROM accounts WHERE user_id = $userId").executeUpdate()
-            }
+        transactionTemplate.execute {
+            entityManager.createNativeQuery("DELETE FROM transactions").executeUpdate()
+            entityManager.createNativeQuery("DELETE FROM cards").executeUpdate()
+            entityManager.createNativeQuery("DELETE FROM pots").executeUpdate()
+            entityManager.createNativeQuery("DELETE FROM accounts").executeUpdate()
+            entityManager.createNativeQuery("DELETE FROM kyc").executeUpdate()
         }
     }
+
+    // -------------------- AUTH --------------------
 
     @Given("I have a valid JWT token for a user")
     fun iHaveValidJWTTokenForUser() {
@@ -105,15 +88,32 @@ class BankingSteps () {
         jwtToken = match?.groupValues?.get(1) ?: throw IllegalStateException("Token not found")
     }
 
-//    @Then("I extract the user ID from the USER token")
-//    fun extractUserIdFromUserToken() {
-//        targetUserId = jwt.extractUserId(jwtToken)
-//    }
+    @Given("I have a valid JWT token for an admin")
+    fun iHaveValidJWTTokenForAdmin() {
+        val loginPayload = """
+        {
+            "username": "adminuser",
+            "password": "Password123"
+        }
+        """
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        val request = HttpEntity(loginPayload, headers)
 
+        val loginResponse = testRestTemplate.postForEntity(
+            "http://localhost:2222/api/v1/users/auth/login",
+            request,
+            String::class.java
+        )
+
+        val tokenRegex = Regex("\"token\":\"(.*?)\"")
+        val match = tokenRegex.find(loginResponse.body ?: "")
+        jwtToken = match?.groupValues?.get(1) ?: throw IllegalStateException("Token not found")
+    }
 
     @Then("I extract the user ID from the USER token")
     fun extractUserIdFromUserToken() {
-        val secret = "58+r/jSrNeLUqe06oVQHK5UFC4fV4dozo5uAAjbgpIU=" // optionally load from properties
+        val secret = "58+r/jSrNeLUqe06oVQHK5UFC4fV4dozo5uAAjbgpIU="
         val key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret))
 
         val claims = Jwts.parserBuilder()
@@ -130,29 +130,7 @@ class BankingSteps () {
         }
     }
 
-
-    @Given("I have a valid JWT token for an admin")
-    fun iHaveValidJWTTokenForAdmin() {
-        val loginPayload = """
-        {
-            "username": "adminuser",
-            "password": "Password123"
-        }
-        """
-        val headers = HttpHeaders()
-        headers.contentType = MediaType.APPLICATION_JSON
-        val request = HttpEntity(loginPayload, headers)
-
-        val loginResponse = testRestTemplate.postForEntity(
-            "http://localhost:2222/api/v1/users/auth/login", //
-            request,
-            String::class.java
-        )
-
-        val tokenRegex = Regex("\"token\":\"(.*?)\"")
-        val match = tokenRegex.find(loginResponse.body ?: "")
-        jwtToken = match?.groupValues?.get(1) ?: throw IllegalStateException("Token not found")
-    }
+    // -------------------- KYC --------------------
 
     @When("I submit the following KYC JSON:")
     fun iSubmitKYCDetailsWithJson(payload: String) {
@@ -181,15 +159,39 @@ class BankingSteps () {
             HttpMethod.POST,
             request,
             String::class.java,
-            targetUserId // target userId
+            targetUserId
         )
     }
 
-    @Then("the response status code should be {int}")
-    fun thenKYCStatusShouldBe(statusCode: Int) {
-        assertEquals(statusCode, response?.statusCode?.value())
+    @When("I call the flag KYC endpoint for user ID {long}")
+    fun iCallFlagKYCEndpointForId(userId: Long) {
+        val headers = HttpHeaders()
+        headers.setBearerAuth(jwtToken)
+        val request = HttpEntity(null, headers)
+
+        response = testRestTemplate.exchange(
+            "/api/v1/kyc/flag/$userId",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
     }
 
+    @When("I retrieve the current user's KYC details")
+    fun iRetrieveCurrentUsersKYCDetails() {
+        val headers = HttpHeaders()
+        headers.setBearerAuth(jwtToken)
+        val request = HttpEntity(null, headers)
+
+        response = testRestTemplate.exchange(
+            "/api/v1/kyc",
+            HttpMethod.GET,
+            request,
+            String::class.java
+        )
+    }
+
+    // -------------------- ACCOUNT --------------------
 
     @When("I create a {string} account")
     fun iCreateAnAccount(accountType: String) {
@@ -222,7 +224,53 @@ class BankingSteps () {
         storedAccountId = match.groupValues[1].toLong()
     }
 
-    private var potId: Long = 0
+    @When("I close account ID from stored account")
+    fun iCloseStoredAccountAsAdmin() {
+        val headers = HttpHeaders()
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(null, headers)
+
+        response = testRestTemplate.exchange(
+            "/admin/v1/accounts/$storedAccountId/close",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @When("I close account ID {long}")
+    fun iCloseAccountById(accountId: Long) {
+        val headers = HttpHeaders()
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(null, headers)
+
+        response = testRestTemplate.exchange(
+            "/admin/v1/accounts/$accountId/close",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @And("I retrieve the summary for the stored account")
+    fun iRetrieveSummaryForStoredAccount() {
+        val headers = HttpHeaders()
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(null, headers)
+
+        response = testRestTemplate.exchange(
+            "/accounts/v1/$storedAccountId/summary",
+            HttpMethod.GET,
+            request,
+            String::class.java
+        )
+    }
+
+    // -------------------- POT --------------------
+
     @And("I create a pot in the stored account with name {string}, allocation type {string}, and value {double}")
     fun iCreatePotInStoredAccount(name: String, allocationType: String, value: Double) {
         val payload = """
@@ -246,7 +294,6 @@ class BankingSteps () {
             String::class.java
         )
 
-        // Extract pot ID from the response body
         val body = response?.body ?: throw IllegalStateException("No response body found.")
         println("Pot creation response body: $body")
 
@@ -289,19 +336,9 @@ class BankingSteps () {
         )
     }
 
-    @And("I retrieve the summary for the stored account")
-    fun iRetrieveSummaryForStoredAccount() {
-        val headers = HttpHeaders()
-        headers.setBearerAuth(jwtToken)
-
-        val request = HttpEntity(null, headers)
-
-        response = testRestTemplate.exchange(
-            "/accounts/v1/$storedAccountId/summary",
-            HttpMethod.GET,
-            request,
-            String::class.java
-        )
+    @And("I edit the last created pot to have name {string}, allocation type {string}, and value {double}")
+    fun iEditLastCreatedPot(name: String, allocationType: String, value: Double) {
+        iEditPotInStoredAccount(potId, name, allocationType, value)
     }
 
     @And("I create 6 pots in the stored account")
@@ -332,35 +369,7 @@ class BankingSteps () {
         }
     }
 
-    @When("I close account ID from stored account")
-    fun iCloseStoredAccountAsAdmin() {
-        val headers = HttpHeaders()
-        headers.setBearerAuth(jwtToken)
-
-        val request = HttpEntity(null, headers)
-
-        response = testRestTemplate.exchange(
-            "/admin/v1/accounts/$storedAccountId/close",
-            HttpMethod.POST,
-            request,
-            String::class.java
-        )
-    }
-
-    @When("I close account ID {long}")
-    fun iCloseAccountById(accountId: Long) {
-        val headers = HttpHeaders()
-        headers.setBearerAuth(jwtToken)
-
-        val request = HttpEntity(null, headers)
-
-        response = testRestTemplate.exchange(
-            "/admin/v1/accounts/$accountId/close",
-            HttpMethod.POST,
-            request,
-            String::class.java
-        )
-    }
+    // -------------------- SALARY --------------------
 
     @Given("I have a valid deposit salary request with amount {double}")
     fun iHaveAValidDepositSalaryRequest(amount: Double) {
@@ -385,8 +394,6 @@ class BankingSteps () {
         println(response!!.body)
     }
 
-    var depositSalaryResponse: DepositSalaryResponse? = null
-
     @Then("the response body should contain the transaction details")
     fun theResponseBodyShouldContainTransactionDetails() {
         val body = response?.body ?: throw IllegalStateException("Response body is null")
@@ -398,15 +405,13 @@ class BankingSteps () {
 
         assertTrue(parsedResponse.destinationId > 0, "Destination ID should be greater than 0")
         assertTrue(parsedResponse.balanceBefore >= BigDecimal.ZERO, "Balance before should be >= 0")
-        assertTrue(parsedResponse.balanceAfter >= parsedResponse.balanceBefore, "Balance after should be >= balance before")
+        assertTrue(
+            parsedResponse.balanceAfter >= parsedResponse.balanceBefore,
+            "Balance after should be >= balance before"
+        )
     }
 
-
-    // pot withdrawal
-
-    private var newPotBalance: BigDecimal = BigDecimal.ZERO
-    private var potWithdrawalResponse: PotTransferResponse? = null
-
+    // -------------------- POT WITHDRAW --------------------
 
     @When("I withdraw {double} from the pot to the main account")
     fun iWithdrawFromPotToMainAccount(amount: Double) {
@@ -463,19 +468,21 @@ class BankingSteps () {
 
         val parsedResponse = potWithdrawalResponse ?: throw IllegalStateException("Response not deserialized")
 
-        // Verify transaction details
-        assertTrue(parsedResponse.newPotBalance >= BigDecimal.ZERO,
-            "New pot balance should be a non-negative value")
+        assertTrue(
+            parsedResponse.newPotBalance >= BigDecimal.ZERO,
+            "New pot balance should be a non-negative value"
+        )
         println(parsedResponse.newPotBalance)
-        assertTrue(parsedResponse.newAccountBalance >= BigDecimal.ZERO,
-            "New account balance should be a non-negative value")
+        assertTrue(
+            parsedResponse.newAccountBalance >= BigDecimal.ZERO,
+            "New account balance should be a non-negative value"
+        )
 
         newPotBalance = parsedResponse.newPotBalance
 
     }
 
-    // pot deposit
-    private var potDepositResponse: PotDepositResponse? = null
+    // -------------------- POT DEPOSIT --------------------
 
     @When("I deposit {double} from account to pot ID {long}")
     fun iDepositFromAccountToPot(amount: Double, destinationPotId: Long) {
@@ -538,21 +545,194 @@ class BankingSteps () {
 
         val parsedResponse = potDepositResponse ?: throw IllegalStateException("Response not deserialized")
 
-        // Verify transaction details
-        assertTrue(parsedResponse.newPotBalance >= BigDecimal.ZERO,
-            "New pot balance should be a non-negative value")
+        assertTrue(
+            parsedResponse.newPotBalance >= BigDecimal.ZERO,
+            "New pot balance should be a non-negative value"
+        )
         println("New pot balance from response: ${parsedResponse.newPotBalance}")
 
-        assertTrue(parsedResponse.newAccountBalance >= BigDecimal.ZERO,
-            "New account balance should be a non-negative value")
+        assertTrue(
+            parsedResponse.newAccountBalance >= BigDecimal.ZERO,
+            "New account balance should be a non-negative value"
+        )
         println("New account balance from response: ${parsedResponse.newAccountBalance}")
 
-        // Store the new pot balance for later assertions
         newPotBalance = parsedResponse.newPotBalance
     }
 
+    // -------------------- TRANSACTION HISTORY --------------------
 
+    @When("I fetch the transaction history for the stored account")
+    fun iFetchTransactionHistoryForStoredAccount() {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
 
+        val payload = """
+        {
+          "accountId": $storedAccountId
+        }
+    """.trimIndent()
 
+        val request = HttpEntity(payload, headers)
 
+        response = testRestTemplate.exchange(
+            "/transactions/v1/history",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @Then("the response should contain a list of transactions")
+    fun theResponseShouldContainTransactionList() {
+        val body = response?.body ?: throw IllegalStateException("Response body is null")
+        assertTrue(body.contains("[") && body.contains("]"), "Expected response to contain a JSON array")
+    }
+
+    @When("I fetch transaction history with both account and pot IDs")
+    fun iFetchHistoryWithMultipleIds() {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val payload = """
+        {
+          "accountId": $storedAccountId,
+          "potId": $potId
+        }
+    """.trimIndent()
+
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/transactions/v1/history",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @When("I fetch transaction history with no IDs")
+    fun iFetchHistoryWithNoIds() {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val payload = "{}"
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/transactions/v1/history",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @When("I fetch transaction history for account ID {long}")
+    fun iFetchHistoryForAccount(accountId: Long) {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val payload = """
+        { "accountId": $accountId }
+    """.trimIndent()
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/transactions/v1/history",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    // -------------------- CARD PURCHASE --------------------
+
+    @And("I extract the account card number")
+    fun iExtractAccountCardNumber() {
+        val body = response?.body ?: throw IllegalStateException("No response body found")
+        val cardRegex = Regex("\"cardNumber\"\\s*:\\s*\"([^\"]+)\"")
+        val match = cardRegex.find(body) ?: throw IllegalStateException("Card number not found in response")
+        extractedCardNumber = match.groupValues[1]
+        println("Extracted card number: $extractedCardNumber")
+    }
+
+    @And("I purchase {double} from the card to destination ID {long}")
+    fun iPurchaseFromCard(amount: Double, destinationId: Long) {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val payload = """
+        {
+            "cardNumberOrToken": "$extractedCardNumber",
+            "amount": $amount,
+            "destinationId": $destinationId
+        }
+    """.trimIndent()
+
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/transactions/v1/purchase",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @When("I attempt to purchase {double} from invalid card {string} to destination ID {long}")
+    fun iAttemptPurchaseFromInvalidCard(amount: Double, card: String, destinationId: Long) {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val payload = """
+        {
+            "cardNumberOrToken": "$card",
+            "amount": $amount,
+            "destinationId": $destinationId
+        }
+    """.trimIndent()
+
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/transactions/v1/purchase",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    // -------------------- SHARED --------------------
+
+    @Then("the response status code should be {int}")
+    fun theResponseStatusCodeShouldBe(expectedStatusCode: Int) {
+        val actualStatus = response?.statusCode?.value()
+        if (actualStatus != expectedStatusCode) {
+            println("Expected: $expectedStatusCode, but got: $actualStatus")
+            println("Response body: ${response?.body}")
+        }
+        assertEquals(expectedStatusCode, actualStatus)
+    }
+
+    @Then("the response status code should be one of {string}")
+    fun theResponseStatusCodeShouldBeOneOf(expectedCodes: String) {
+        val expectedStatusCodes = expectedCodes.split(",").map { it.trim().toInt() }
+        val actualStatus = response?.statusCode?.value()
+
+        if (actualStatus !in expectedStatusCodes) {
+            println("Expected one of: $expectedStatusCodes, but got: $actualStatus")
+            println("Response body: ${response?.body}")
+        }
+
+        assertTrue(
+            actualStatus in expectedStatusCodes,
+            "Expected one of $expectedStatusCodes but got $actualStatus"
+        )
+    }
 }

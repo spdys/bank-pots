@@ -24,3 +24,8 @@ Feature: Flag KYC Endpoint
     Given I have a valid JWT token for an admin
     When I call the flag KYC endpoint
     Then the response status code should be 200
+
+  Scenario: Fail to flag nonexistent user
+    Given I have a valid JWT token for an admin
+    When I call the flag KYC endpoint for user ID 99999
+    Then the response status code should be 404
