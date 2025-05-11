@@ -31,14 +31,14 @@ class CardService(
         return card
     }
 
-    fun createCardManually(card: CardEntity): CardEntity {
-        val cardNumber = generateCardNumber()
-        val potId = card.potId ?: throw BankingNotFoundException("No pot found!")
-        val token = generateToken(potId)
-        card.cardNumber = cardNumber
-        card.token = token
-        return cardRepository.save(card)
-    }
+//    fun createCardManually(card: CardEntity): CardEntity {
+//        val cardNumber = generateCardNumber()
+//        val potId = card.potId ?: throw BankingNotFoundException("No pot found!")
+//        val token = generateToken(potId)
+//        card.cardNumber = cardNumber
+//        card.token = token
+//        return cardRepository.save(card)
+//    }
 
     // TODO: associate with a card number for frontend
     fun autoGenerateTokenizedCard(potId: Long): CardEntity {

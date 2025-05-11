@@ -25,8 +25,8 @@ class UserPrincipal(
     override fun isEnabled(): Boolean = true
 
     fun getId(): Long? = id
-    fun getJwtToken(): String? = token
+//    fun getJwtToken(): String? = token
 
     fun getUserId(): Long? = if (role.equals("USER", ignoreCase = true)) id else null
-    fun getAdminId(): Long? = if (role.equals("ADMIN", ignoreCase = true)) id else null
+//    fun getAdminId(): Long? = if (role.equals("ADMIN", ignoreCase = true)) id else null
 }
