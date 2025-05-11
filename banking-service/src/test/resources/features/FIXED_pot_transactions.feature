@@ -37,4 +37,4 @@ Feature: Pot Withdrawal Functionality
 
   Scenario: Fail to  withdraw money from pot to main account due no valid token
     When I withdraw -50.0 from the pot to the main account
-    Then the response status code should be 404
+    Then the response status code should be 403
