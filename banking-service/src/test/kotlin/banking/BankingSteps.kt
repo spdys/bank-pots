@@ -1,6 +1,9 @@
 package banking
 
 import banking.dto.DepositSalaryResponse
+import banking.dto.PotDepositResponse
+import banking.dto.PotResponse
+import banking.dto.PotWithdrawalResponse
 import io.cucumber.java.After
 import io.cucumber.java.Before
 import io.cucumber.java.en.And
@@ -23,7 +26,11 @@ import java.math.BigDecimal
 import kotlin.test.assertTrue
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
+
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.security.Keys
+import java.util.Base64
+
 
 
 @CucumberContextConfiguration
@@ -44,8 +51,8 @@ class BankingSteps () {
     private var response: ResponseEntity<String>? = null
     private var storedAccountId: Long = 0
 
-    @Autowired
-    lateinit var jwt: JwtUtilForTesting
+//    @Autowired
+//    lateinit var jwt: JwtUtilForTesting
     private var userId: Long = 0
     private var targetUserId : Long = 0
     private var adminUserId: Long = 0
@@ -98,9 +105,29 @@ class BankingSteps () {
         jwtToken = match?.groupValues?.get(1) ?: throw IllegalStateException("Token not found")
     }
 
+//    @Then("I extract the user ID from the USER token")
+//    fun extractUserIdFromUserToken() {
+//        targetUserId = jwt.extractUserId(jwtToken)
+//    }
+
+
     @Then("I extract the user ID from the USER token")
     fun extractUserIdFromUserToken() {
-        targetUserId = jwt.extractUserId(jwtToken)
+        val secret = "58+r/jSrNeLUqe06oVQHK5UFC4fV4dozo5uAAjbgpIU=" // optionally load from properties
+        val key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret))
+
+        val claims = Jwts.parserBuilder()
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(jwtToken)
+            .body
+
+        val idClaim = claims["id"]
+        targetUserId = when (idClaim) {
+            is Number -> idClaim.toLong()
+            is String -> idClaim.toLong()
+            else -> throw IllegalArgumentException("Invalid ID type in token")
+        }
     }
 
 
@@ -126,23 +153,6 @@ class BankingSteps () {
         val match = tokenRegex.find(loginResponse.body ?: "")
         jwtToken = match?.groupValues?.get(1) ?: throw IllegalStateException("Token not found")
     }
-
-    @Then("I extract the user ID from the ADMIN token")
-    fun extractUserIdFromAdminToken() {
-        adminUserId = jwt.extractUserId(jwtToken)
-    }
-
-//    @After
-//    fun cleanAccountsTestData() {
-//        transactionTemplate.execute {
-//            val testUserId: Long = 3 // test user's id
-//            entityManager.createNativeQuery("DELETE FROM pots WHERE account_id IN (SELECT id FROM accounts WHERE user_id = $testUserId)")
-//                .executeUpdate()
-//            entityManager.createNativeQuery("DELETE FROM accounts WHERE user_id = $testUserId").executeUpdate()
-//        }
-//    }
-    // used variable userId instead of fixed 3 and guarded it in case no userId was extracted
-
 
     @When("I submit the following KYC JSON:")
     fun iSubmitKYCDetailsWithJson(payload: String) {
@@ -212,6 +222,7 @@ class BankingSteps () {
         storedAccountId = match.groupValues[1].toLong()
     }
 
+    private var potId: Long = 0
     @And("I create a pot in the stored account with name {string}, allocation type {string}, and value {double}")
     fun iCreatePotInStoredAccount(name: String, allocationType: String, value: Double) {
         val payload = """
@@ -234,6 +245,24 @@ class BankingSteps () {
             request,
             String::class.java
         )
+
+        // Extract pot ID from the response body
+        val body = response?.body ?: throw IllegalStateException("No response body found.")
+        println("Pot creation response body: $body")
+
+        // Use Jackson to deserialize the response to PotResponse
+        val objectMapper = ObjectMapper().registerKotlinModule()
+        try {
+            val potResponse = objectMapper.readValue(body, PotResponse::class.java)
+            potId = potResponse.potId
+            println("Extracted pot ID: $potId")
+        } catch (e: Exception) {
+            // Fallback to regex extraction if JSON parsing fails
+            val idRegex = Regex("\"potId\":\\s*(\\d+)")
+            val match = idRegex.find(body)
+            potId = match?.groupValues[1]?.toLong() ?: 0L
+            println("Extracted pot ID using regex: $potId")
+        }
     }
 
     @And("I edit pot ID {long} in the stored account with name {string}, allocation type {string}, and value {double}")
@@ -347,7 +376,6 @@ class BankingSteps () {
 
         val requestEntity = HttpEntity(payload, headers)
 
-        // Send the request
         response = testRestTemplate.exchange(
             "/transactions/v1/salary",
             HttpMethod.POST,
@@ -372,5 +400,159 @@ class BankingSteps () {
         assertTrue(parsedResponse.balanceBefore >= BigDecimal.ZERO, "Balance before should be >= 0")
         assertTrue(parsedResponse.balanceAfter >= parsedResponse.balanceBefore, "Balance after should be >= balance before")
     }
+
+
+    // pot withdrawal
+
+    private var newPotBalance: BigDecimal = BigDecimal.ZERO
+    private var potWithdrawalResponse: PotWithdrawalResponse? = null
+
+
+    @When("I withdraw {double} from the pot to the main account")
+    fun iWithdrawFromPotToMainAccount(amount: Double) {
+        val payload = """
+    {
+        "sourcePotId": $potId,
+        "amount": $amount
+    }
+    """.trimIndent()
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/transactions/v1/pot/withdrawal",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @When("I try to withdraw from non-existent pot with ID {long}")
+    fun iTryToWithdrawFromNonExistentPot(invalidPotId: Long) {
+        val payload = """
+    {
+        "sourcePotId": $invalidPotId,
+        "amount": 50.0
+    }
+    """.trimIndent()
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/transactions/v1/pot/withdrawal",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @And("the withdrawal response should contain valid transaction details")
+    fun theWithdrawalResponseShouldContainValidTransactionDetails() {
+        val body = response?.body ?: throw IllegalStateException("Response body is null")
+
+        val objectMapper = ObjectMapper().registerKotlinModule()
+        potWithdrawalResponse = objectMapper.readValue(body, PotWithdrawalResponse::class.java)
+
+        val parsedResponse = potWithdrawalResponse ?: throw IllegalStateException("Response not deserialized")
+
+        // Verify transaction details
+        assertTrue(parsedResponse.newPotBalance >= BigDecimal.ZERO,
+            "New pot balance should be a non-negative value")
+        println(parsedResponse.newPotBalance)
+        assertTrue(parsedResponse.newAccountBalance >= BigDecimal.ZERO,
+            "New account balance should be a non-negative value")
+
+        newPotBalance = parsedResponse.newPotBalance
+
+    }
+
+    // pot deposit
+    private var potDepositResponse: PotDepositResponse? = null
+
+    @When("I deposit {double} from account to pot ID {long}")
+    fun iDepositFromAccountToPot(amount: Double, destinationPotId: Long) {
+        // Check the initial pot balance first
+
+        val payload = """
+    {
+        "sourceAccountId": $storedAccountId,
+        "destinationPotId": $destinationPotId,
+        "amount": $amount
+    }
+    """.trimIndent()
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/transactions/v1/pot/deposit",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @When("I deposit {double} from account to the created pot")
+    fun iDepositFromAccountToCreatedPot(amount: Double) {
+
+        val payload = """
+    {
+        "sourceAccountId": $storedAccountId,
+        "destinationPotId": $potId,
+        "amount": $amount
+    }
+    """.trimIndent()
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+
+        val request = HttpEntity(payload, headers)
+
+        response = testRestTemplate.exchange(
+            "/transactions/v1/pot/deposit",
+            HttpMethod.POST,
+            request,
+            String::class.java
+        )
+    }
+
+    @And("the deposit response should contain valid transaction details")
+    fun theDepositResponseShouldContainValidTransactionDetails() {
+        val body = response?.body ?: throw IllegalStateException("Response body is null")
+        println("Deposit response: $body")
+
+        val objectMapper = ObjectMapper().registerKotlinModule()
+        potDepositResponse = objectMapper.readValue(body, PotDepositResponse::class.java)
+
+        val parsedResponse = potDepositResponse ?: throw IllegalStateException("Response not deserialized")
+
+        // Verify transaction details
+        assertTrue(parsedResponse.newPotBalance >= BigDecimal.ZERO,
+            "New pot balance should be a non-negative value")
+        println("New pot balance from response: ${parsedResponse.newPotBalance}")
+
+        assertTrue(parsedResponse.newAccountBalance >= BigDecimal.ZERO,
+            "New account balance should be a non-negative value")
+        println("New account balance from response: ${parsedResponse.newAccountBalance}")
+
+        // Store the new pot balance for later assertions
+        newPotBalance = parsedResponse.newPotBalance
+    }
+
+
+
+
 
 }
