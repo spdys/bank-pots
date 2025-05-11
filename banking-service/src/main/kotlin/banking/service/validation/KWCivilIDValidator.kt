@@ -44,7 +44,7 @@ class KWCivilIDValidator {
             val checkDigit = 11 - remainder
 
             if (checkDigit != civilId[11].digitToInt()) {
-                throw BankingBadRequestException("Invalid Civil ID checksum.") as Throwable
+                throw BankingBadRequestException("Invalid Civil ID checksum.")
             }
 
             return civilId
