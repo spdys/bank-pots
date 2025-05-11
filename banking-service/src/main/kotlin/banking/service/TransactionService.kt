@@ -323,6 +323,7 @@ class TransactionService(
             if (parentAccount.userId != principal.getId()) {
                 throw BankingForbiddenException("User ID mismatch.")
             }
+            if (!isAccountValid(parentAccount)) throw BankingForbiddenException("Account not active.")
 
             sourceBalance = pot.balance
 
@@ -341,6 +342,8 @@ class TransactionService(
             if (account.userId != principal.getId()) {
                 throw BankingForbiddenException("User ID mismatch.")
             }
+
+            if (!isAccountValid(account)) throw BankingForbiddenException("Account not active.")
 
             sourceBalance = account.balance
 
