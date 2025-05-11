@@ -38,11 +38,19 @@ class TransactionService(
     // all database changes (pot balance, account balance, and transaction record)
     // will be rolled back automatically.
 
+    fun isAccountActive(accountEntity: AccountEntity): Boolean {
+        return accountEntity.isActive
+    }
+
     @Transactional
     fun depositSalaryToAccount(destinationId: Long, amount: BigDecimal): DepositSalaryResponse {
 
         val destinationAccount = accountRepository.findById(destinationId)
             .orElseThrow { BankingNotFoundException("NO DESTINATION ACCOUNT FOUND") }
+
+        if (!isAccountActive(destinationAccount)) {
+            throw BankingBadRequestException("Inactive destination account")
+        }
 
         if (destinationAccount.accountType != AccountEntity.AccountType.MAIN){
             throw BankingBadRequestException("NOT MAIN ACCOUNT")
@@ -356,9 +364,8 @@ class TransactionService(
         if (!card.isActive)
             return false
         if (card.expiresAt.isBefore(LocalDateTime.now())) {
-            card.isActive = false
-            // Safe assertions here
-            // as cards creation requires either pot/acc id
+            card.isActive = false // inactivate
+            // issue new
             if (card.cardType == CardType.PHYSICAL){
                 cardService.autoGeneratePhysicalCard(card.accountId!!)
             }
