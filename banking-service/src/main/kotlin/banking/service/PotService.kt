@@ -1,6 +1,7 @@
 package banking.service
 
 import banking.BankingBadRequestException
+import banking.BankingForbiddenException
 import banking.BankingNotFoundException
 import banking.dto.PotRequest
 import banking.dto.PotResponse
@@ -25,7 +26,7 @@ class PotService(
 
         // check if accountId is associated with principal's ID
         if(account.userId != principal.getId()) {
-            throw BankingNotFoundException("User ID mismatch.")
+            throw BankingForbiddenException("User ID mismatch.")
         }
 
         // checking account type
@@ -81,7 +82,7 @@ class PotService(
 
         // check if accountId is associated with principal's ID
         if(account.userId != principal.getId()) {
-            throw BankingNotFoundException("User ID mismatch.")
+            throw BankingForbiddenException("User ID mismatch.")
         }
 
         // checking account type
