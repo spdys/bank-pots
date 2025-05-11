@@ -29,7 +29,7 @@ data class AccountSummaryDto(
     val accountNumber: String,
     val accountType: AccountEntity.AccountType,
     val balance: BigDecimal,
-    val cardNumber: String,
+    val cardNumber: String?,
     val currency: String,
     val isActive: Boolean,
     val pots: List<PotSummaryDto>? = null

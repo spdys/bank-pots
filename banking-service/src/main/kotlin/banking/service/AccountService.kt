@@ -74,7 +74,7 @@ class AccountService(
                         pot.id,
                         pot.name,
                         pot.balance,
-                        cardRepository.findByPotId(pot.id).token!!,
+                        cardRepository.findByPotId(pot.id)?.token ?: "Deleted card.",
                         pot.allocationType,
                         pot.allocationValue
                     )
@@ -85,7 +85,7 @@ class AccountService(
                 account.accountNumber,
                 account.accountType,
                 account.balance,
-                accountCard.cardNumber!!,
+                accountCard?.cardNumber ?: "Deleted card.",
                 account.currency,
                 account.isActive,
                 pots,
@@ -96,7 +96,7 @@ class AccountService(
                 account.accountNumber,
                 account.accountType,
                 account.balance,
-                accountCard.cardNumber!!,
+                accountCard?.cardNumber ?: "Deleted card.",
                 account.currency,
                 account.isActive,
             )

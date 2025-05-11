@@ -9,7 +9,7 @@ interface CardRepository : JpaRepository<CardEntity, Long>{
 
     fun findByCardNumber(cardNumberOrToken: String): CardEntity?
     fun findByToken(token: String): CardEntity?
-    fun findByAccountId(accountId: Long): CardEntity
-    fun findByPotId(potId: Long): CardEntity
+    fun findByAccountId(accountId: Long): CardEntity?
+    fun findByPotId(potId: Long): CardEntity?
 
 }
