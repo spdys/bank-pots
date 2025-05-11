@@ -23,7 +23,7 @@ data class KYCResponse(
     val verified: Boolean,
 )
 
-data class KYCFlagRequest(val userId: Long)
+data class KYCFlagResponse(val response: String)
 
 
 

@@ -1,14 +1,15 @@
 package banking.service
 
 import banking.BankingNotFoundException
-import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Service
+import banking.dto.KYCFlagResponse
 import banking.dto.KYCRequest
 import banking.dto.KYCResponse
 import banking.entity.KYCEntity
 import banking.repository.KYCRepository
 import banking.security.UserPrincipal
 import banking.service.validation.KWCivilIDValidator
+import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Service
 
 @Service
 class KYCService(private val kYCRepository: KYCRepository) {
@@ -70,7 +71,8 @@ class KYCService(private val kYCRepository: KYCRepository) {
         kyc!!.verified = !kyc.verified
         kYCRepository.save(kyc)
         return ResponseEntity.ok()
-            .body("User ${kyc.fullName} has been successfully flagged and verified status is now ${kyc.verified}.")
+            .body(
+                KYCFlagResponse("User ${kyc.fullName} has been successfully flagged and verified status is now ${kyc.verified}."))
     }
 
     fun getKYC(userId: Long): ResponseEntity<Any> {
@@ -87,7 +89,8 @@ class KYCService(private val kYCRepository: KYCRepository) {
                 kyc.dateOfBirth,
                 kyc.dateOfBirth,
                 verified = kyc.verified
-            ))
+            )
+        )
     }
 
 
