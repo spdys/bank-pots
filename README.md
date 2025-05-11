@@ -75,5 +75,3 @@ Tests are written in Cucumber-style `.feature` files that describe expected beha
 Locations:
 - `auth-service/src/test/resources/features/`
 - `banking-service/src/test/resources/features/`
-
-> Coverage: 00%

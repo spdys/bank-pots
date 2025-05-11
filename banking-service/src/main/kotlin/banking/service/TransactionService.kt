@@ -39,8 +39,8 @@ class TransactionService(
     // all database changes (pot balance, account balance, and transaction record)
     // will be rolled back automatically.
 
-    fun isAccountActive(accountEntity: AccountEntity): Boolean {
-        return accountEntity.isActive
+    fun isAccountValid(account: AccountEntity) : Boolean{
+        return account.isActive
     }
 
     @Transactional
@@ -464,10 +464,6 @@ class TransactionService(
         }
 
         return transactions.map { it.toHistoryResponse() }
-    }
-
-    fun isAccountValid(account: AccountEntity) : Boolean{
-        return account.isActive
     }
 
 }
