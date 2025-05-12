@@ -28,8 +28,21 @@ class CardController(
 //        return ResponseEntity.ok(card)
 //    }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete card by ID")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "204",
+            description = "Card successfully deleted."),
+        ApiResponse(
+            responseCode = "403",
+            description = "Forbidden: only admins may perform this action.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "404",
+            description = "Card not found.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))])
+    )
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     fun deleteCard(@PathVariable id: Long): ResponseEntity<Void> {
         cardService.deleteCard(id)

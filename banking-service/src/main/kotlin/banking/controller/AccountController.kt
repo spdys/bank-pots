@@ -32,11 +32,14 @@ class AccountController(
 
     @Operation(summary = "Create a new account for the authenticated user")
     @ApiResponses(
-        value = [
-            ApiResponse(responseCode = "201", content = [Content(schema = Schema(implementation = AccountResponse::class))]),
-            ApiResponse(responseCode = "400", content = [Content(schema = Schema(implementation = FailureResponse::class))]),
-
-        ]
+        ApiResponse(
+            responseCode = "201",
+            description = "Account created successfully.",
+            content = [Content(schema = Schema(implementation = AccountResponse::class))]),
+        ApiResponse(
+            responseCode = "400",
+            description = "Invalid account creation request.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))])
     )
     @PostMapping("/accounts/v1/create")
     fun createAccount(
@@ -50,11 +53,22 @@ class AccountController(
 
     @Operation(summary = "Create a new pot within the user's account")
     @ApiResponses(
-        value = [
-            ApiResponse(responseCode = "201", content = [Content(schema = Schema(implementation = PotResponse::class))]),
-            ApiResponse(responseCode = "400", content = [Content(schema = Schema(implementation = FailureResponse::class))]),
-            ApiResponse(responseCode = "404", content = [Content(schema = Schema(implementation = FailureResponse::class))])
-        ]
+        ApiResponse(
+            responseCode = "201",
+            description = "Pot created successfully.",
+            content = [Content(schema = Schema(implementation = PotResponse::class))]),
+        ApiResponse(
+            responseCode = "400",
+            description = "Invalid pot creation request.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "403",
+            description = "Forbidden: account does not belong to user.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "404",
+            description = "Account not found.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))])
     )
     @PostMapping("/accounts/v1/{accountId}/pots")
     fun createPot(
@@ -69,11 +83,22 @@ class AccountController(
 
     @Operation(summary = "Edit an existing pot within the user's account")
     @ApiResponses(
-        value = [
-            ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = PotResponse::class))]),
-            ApiResponse(responseCode = "400", content = [Content(schema = Schema(implementation = FailureResponse::class))]),
-            ApiResponse(responseCode = "404",  content = [Content(schema = Schema(implementation = FailureResponse::class))])
-        ]
+        ApiResponse(
+            responseCode = "200",
+            description = "Pot edited successfully.",
+            content = [Content(schema = Schema(implementation = PotResponse::class))]),
+        ApiResponse(
+            responseCode = "400",
+            description = "Invalid pot edit request.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "403",
+            description = "Forbidden: account does not belong to user.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "404",
+            description = "Account or pot not found.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))])
     )
     @PostMapping("/accounts/v1/{accountId}/pots/{potId}")
     fun editPot(
@@ -88,10 +113,18 @@ class AccountController(
 
     @Operation(summary = "Get a summary of the user's account including pots and balance")
     @ApiResponses(
-        value = [
-            ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = AccountSummaryDto::class))]),
-            ApiResponse(responseCode = "404",  content = [Content(schema = Schema(implementation = FailureResponse::class))])
-        ]
+        ApiResponse(
+            responseCode = "200",
+            description = "Successfully retrieved account summary.",
+            content = [Content(schema = Schema(implementation = AccountSummaryDto::class))]),
+        ApiResponse(
+            responseCode = "403",
+            description = "Forbidden: account does not belong to user.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "404",
+            description = "Account not found.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))])
     )
     @GetMapping("/accounts/v1/{accountId}/summary")
     fun getAccountSummary(
@@ -104,11 +137,18 @@ class AccountController(
 
     @Operation(summary = "Close a user account (Admin only)")
     @ApiResponses(
-        value = [
-            ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = CloseAccountResponse::class))]),
-            ApiResponse(responseCode = "403",  content = [Content()]),
-            ApiResponse(responseCode = "404",  content = [Content(schema = Schema(implementation = FailureResponse::class))])
-        ]
+        ApiResponse(
+            responseCode = "200",
+            description = "Account successfully closed.",
+            content = [Content(schema = Schema(implementation = CloseAccountResponse::class))]),
+        ApiResponse(
+            responseCode = "403",
+            description = "Forbidden: only admins may perform this action.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "404",
+            description = "Account not found.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))])
     )
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/v1/accounts/{accountId}/close")

@@ -27,9 +27,22 @@ class TransactionController(
 
     @Operation(summary = "Deposit salary to account (Admin only)")
     @ApiResponses(
-        ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = DepositSalaryResponse::class))]),
-        ApiResponse(responseCode = "400", content = [Content(schema = Schema(implementation = FailureResponse::class))]),
-        ApiResponse(responseCode = "404", content = [Content(schema = Schema(implementation = FailureResponse::class))])
+        ApiResponse(
+            responseCode = "200",
+            description = "Salary successfully deposited.",
+            content = [Content(schema = Schema(implementation = DepositSalaryResponse::class))]),
+        ApiResponse(
+            responseCode = "400",
+            description = "Invalid input or business rule violation (e.g., account inactive, not main account).",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "404",
+            description = "Account not found.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "403",
+            description = "Forbidden: admin access required.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))])
     )
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/v1/salary")
@@ -45,9 +58,22 @@ class TransactionController(
 
     @Operation(summary = "Withdraw from pot to main account")
     @ApiResponses(
-        ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = PotTransferResponse::class))]),
-        ApiResponse(responseCode = "400", content = [Content(schema = Schema(implementation = FailureResponse::class))]),
-        ApiResponse(responseCode = "404", content = [Content(schema = Schema(implementation = FailureResponse::class))])
+        ApiResponse(
+            responseCode = "200",
+            description = "Withdrawal from pot to main account successful.",
+            content = [Content(schema = Schema(implementation = PotTransferResponse::class))]),
+        ApiResponse(
+            responseCode = "400",
+            description = "Invalid withdrawal request. This may occur if the pot/account is inactive, the amount is negative or exceeds the balance, or if the account is misconfigured.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "403",
+            description = "Forbidden: the authenticated user's ID does not match the pot/account owner.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "404",
+            description = "The specified pot or account was not found.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))])
     )
     @PostMapping("/v1/pot/withdrawal")
     fun withdrawalToAccount(
@@ -66,9 +92,22 @@ class TransactionController(
 
     @Operation(summary = "Deposit to pot" , description = "Adds funds to a pot from main/savings account")
     @ApiResponses(
-        ApiResponse(responseCode = "200",content = [Content(schema = Schema(implementation = PotDepositResponse::class))]),
-        ApiResponse(responseCode = "400", content = [Content(schema = Schema(implementation = FailureResponse::class))]),
-        ApiResponse(responseCode = "404", content = [Content(schema = Schema(implementation = FailureResponse::class))])
+        ApiResponse(
+            responseCode = "200",
+            description = "Funds successfully deposited into the pot.",
+            content = [Content(schema = Schema(implementation = PotDepositResponse::class))]),
+        ApiResponse(
+            responseCode = "400",
+            description = "Invalid deposit request. This may occur if the pot/account is mismatched, inactive, or if the amount is invalid.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "403",
+            description = "Forbidden: the authenticated user's ID does not match the source account owner.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "404",
+            description = "The specified account or pot was not found.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))])
     )
     @PostMapping("v1/pot/deposit")
     fun depositToPot(
@@ -89,9 +128,22 @@ class TransactionController(
 
     @Operation(summary = "Purchase from card or tokenized card", description = "Make POS purchases")
     @ApiResponses(
-        ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = CardPaymentResponse::class))]),
-        ApiResponse(responseCode = "400", content = [Content(schema = Schema(implementation = FailureResponse::class))]),
-        ApiResponse(responseCode = "404", content = [Content(schema = Schema(implementation = FailureResponse::class))])
+        ApiResponse(
+            responseCode = "200",
+            description = "Purchase completed successfully.",
+            content = [Content(schema = Schema(implementation = CardPaymentResponse::class))]),
+        ApiResponse(
+            responseCode = "400",
+            description = "Bad request. This may include invalid card, insufficient balance, or expired card.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "403",
+            description = "Forbidden: user ID in the token does not match the card owner, or the account is inactive.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "404",
+            description = "Card, pot, or account not found.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))])
     )
     @PostMapping("v1/purchase")
     fun purchaseFromCard(
@@ -112,9 +164,22 @@ class TransactionController(
 
     @Operation(summary = "Retrieve transaction history", description = "Retrieve history per pot, per card, or per account")
     @ApiResponses(
-        ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = TransactionHistoryResponse::class))]),
-        ApiResponse(responseCode = "400", content = [Content(schema = Schema(implementation = FailureResponse::class))]),
-        ApiResponse(responseCode = "404", content = [Content(schema = Schema(implementation = FailureResponse::class))])
+        ApiResponse(
+            responseCode = "200",
+            description = "Transaction history retrieved successfully.",
+            content = [Content(schema = Schema(implementation = TransactionHistoryResponse::class))]),
+        ApiResponse(
+            responseCode = "400",
+            description = "Bad request. You must provide exactly one of: cardId, potId, or accountId.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "403",
+            description = "Forbidden: user ID in token does not match the requested resource.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))]),
+        ApiResponse(
+            responseCode = "404",
+            description = "Specified card, pot, or account not found.",
+            content = [Content(schema = Schema(implementation = FailureResponse::class))])
     )
     @PostMapping("v1/history")
     fun retrieveTransactionHistory(
