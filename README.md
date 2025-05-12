@@ -77,4 +77,4 @@ Locations:
 - `auth-service/src/test/resources/features/`
 - `banking-service/src/test/resources/features/`
 
-> code coverage ≈ 58%
+> code branch coverage ≈ 58%
